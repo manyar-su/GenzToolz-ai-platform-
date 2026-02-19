@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Copy, Check, Info } from 'lucide-react';
 import { useTokenStore } from '../../store/useTokenStore';
+import { authorizedFetch } from '../../lib/api-client';
 
 export default function BrandPitch() {
   const navigate = useNavigate();
-  const { deductToken } = useTokenStore();
+  const { deductToken, fetchBalance } = useTokenStore();
   const [brandName, setBrandName] = useState('');
   const [niche, setNiche] = useState('');
   const [followerCount, setFollowerCount] = useState('');
@@ -15,10 +16,13 @@ export default function BrandPitch() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!deductToken(1)) {
+    
+    // Optimistic check
+    if (!await deductToken(0.5)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }
+    
     setLoading(true);
     setResult(null);
 
@@ -26,9 +30,8 @@ export default function BrandPitch() {
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const response = await fetch('/api/tools/brand-pitch', {
+      const response = await authorizedFetch('/api/tools/brand-pitch', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ brand_name: brandName, niche, follower_count: followerCount }),
         signal: controller.signal,
       });
@@ -36,6 +39,8 @@ export default function BrandPitch() {
       
       const data = await response.json();
       if (data.success) {
+        fetchBalance(); // Sync balance
+        
         let cleanJson = data.data.replace(/```json\n?|\n?```/g, '').trim();
         try {
           const parsed = JSON.parse(cleanJson);
@@ -48,7 +53,9 @@ export default function BrandPitch() {
       }
     } catch (error: any) {
       console.error(error);
-      if (error.name === 'AbortError') {
+      if (error.message === 'Saldo Tidak Cukup') {
+         alert('Saldo Tidak Cukup! Silakan top-up.');
+      } else if (error.name === 'AbortError') {
         alert('Waktu habis! Permintaan memakan waktu terlalu lama. Silakan coba lagi.');
       } else {
         alert('Terjadi kesalahan saat menghubungi server.');
@@ -85,7 +92,7 @@ export default function BrandPitch() {
                   <strong>Cara Penggunaan:</strong> Masukkan nama brand yang ingin Anda ajak kerjasama, niche konten Anda, dan jumlah followers. 
                   AI akan membuatkan email penawaran profesional.
                   <br/>
-                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 1 Token per generate.</span>
+                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 0.5 Token per generate.</span>
                 </p>
               </div>
             </div>

@@ -41,7 +41,6 @@ export default function App() {
     <AlertProvider>
       <Router>
         <Layout>
-          <SupabaseCheck />
           <Routes>
             <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />

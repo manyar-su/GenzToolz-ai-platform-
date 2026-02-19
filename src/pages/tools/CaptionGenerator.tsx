@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Copy, Check, Info, Download } from 'lucide-react';
 import { useTokenStore } from '../../store/useTokenStore';
+import { authorizedFetch } from '../../lib/api-client';
 
 export default function CaptionGenerator() {
   const navigate = useNavigate();
-  const { deductToken } = useTokenStore();
+  const { deductToken, fetchBalance } = useTokenStore();
   const [description, setDescription] = useState('');
   const [tone, setTone] = useState('Casual');
   const [loading, setLoading] = useState(false);
@@ -14,10 +15,13 @@ export default function CaptionGenerator() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!deductToken(1)) {
+    
+    // Optimistic check
+    if (!await deductToken(0.2)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }
+    
     setLoading(true);
     setResults([]);
 
@@ -25,9 +29,8 @@ export default function CaptionGenerator() {
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
     try {
-      const response = await fetch('/api/tools/caption-generator', {
+      const response = await authorizedFetch('/api/tools/caption-generator', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_description: description, tone }),
         signal: controller.signal,
       });
@@ -35,6 +38,8 @@ export default function CaptionGenerator() {
       
       const data = await response.json();
       if (data.success) {
+        fetchBalance(); // Sync balance
+        
         // Clean markdown if present
         let cleanJson = data.data.replace(/```json\n?|\n?```/g, '').trim();
         try {
@@ -53,7 +58,9 @@ export default function CaptionGenerator() {
       }
     } catch (error: any) {
       console.error(error);
-      if (error.name === 'AbortError') {
+      if (error.message === 'Saldo Tidak Cukup') {
+         alert('Saldo Tidak Cukup! Silakan top-up.');
+      } else if (error.name === 'AbortError') {
         alert('Waktu habis! Permintaan memakan waktu terlalu lama. Silakan coba lagi.');
       } else {
         alert('Terjadi kesalahan saat menghubungi server.');
@@ -101,7 +108,7 @@ export default function CaptionGenerator() {
                   <strong>Cara Penggunaan:</strong> Jelaskan isi postingan Anda (foto/video) dan pilih nada bicara (tone). 
                   AI akan membuatkan caption menarik beserta hashtag yang relevan agar masuk FYP.
                   <br/>
-                  <span className="mt-2 block font-semibold text-blue-900">Biaya: 1 Token per generate.</span>
+                  <span className="mt-2 block font-semibold text-blue-900">Biaya: 0.2 Token per generate.</span>
                 </p>
               </div>
             </div>

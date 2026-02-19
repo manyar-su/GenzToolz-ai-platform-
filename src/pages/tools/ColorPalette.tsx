@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Copy, Check, Info } from 'lucide-react';
 import { useTokenStore } from '../../store/useTokenStore';
+import { authorizedFetch } from '../../lib/api-client';
 
 export default function ColorPalette() {
   const navigate = useNavigate();
-  const { deductToken } = useTokenStore();
+  const { deductToken, fetchBalance } = useTokenStore();
   const [vibe, setVibe] = useState('');
   const [loading, setLoading] = useState(false);
   const [palette, setPalette] = useState<{color: string, name: string, explanation: string}[]>([]);
@@ -13,10 +14,13 @@ export default function ColorPalette() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!deductToken(1)) {
+    
+    // Optimistic check
+    if (!await deductToken(1)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }
+    
     setLoading(true);
     setPalette([]);
 
@@ -24,9 +28,8 @@ export default function ColorPalette() {
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const response = await fetch('/api/tools/color-palette', {
+      const response = await authorizedFetch('/api/tools/color-palette', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ vibe }),
         signal: controller.signal,
       });
@@ -34,6 +37,8 @@ export default function ColorPalette() {
       
       const data = await response.json();
       if (data.success) {
+        fetchBalance(); // Sync balance
+        
         let cleanJson = data.data.replace(/```json\n?|\n?```/g, '').trim();
         try {
           const parsed = JSON.parse(cleanJson);
@@ -46,7 +51,9 @@ export default function ColorPalette() {
       }
     } catch (error: any) {
       console.error(error);
-      if (error.name === 'AbortError') {
+      if (error.message === 'Saldo Tidak Cukup') {
+         alert('Saldo Tidak Cukup! Silakan top-up.');
+      } else if (error.name === 'AbortError') {
         alert('Waktu habis! Permintaan memakan waktu terlalu lama. Silakan coba lagi.');
       } else {
         alert('Terjadi kesalahan saat menghubungi server.');

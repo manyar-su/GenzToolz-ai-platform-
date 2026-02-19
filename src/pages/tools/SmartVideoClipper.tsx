@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, Info, Youtube, Upload, Film, Scissors, Type, Bell, 
 import { useTokenStore } from '../../store/useTokenStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useAlert } from '../../context/AlertContext';
+import { authorizedFetch } from '../../lib/api-client';
 
 interface Clip {
   id: string;
@@ -46,7 +47,7 @@ export default function SmartVideoClipper() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/tools/smart-clipper/status/${job.id}`);
+        const res = await authorizedFetch(`/api/tools/smart-clipper/status/${job.id}`);
         const data = await res.json();
         if (data.success) {
           setJob(data.data);
@@ -73,9 +74,8 @@ export default function SmartVideoClipper() {
     hasSavedRef.current = false;
 
     try {
-      const response = await fetch('/api/tools/smart-clipper/start', {
+      const response = await authorizedFetch('/api/tools/smart-clipper/start', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ videoUrl: activeTab === 'link' ? videoUrl : 'uploaded_file_mock' }),
       });
       

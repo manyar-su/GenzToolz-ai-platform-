@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Copy, Check, Info, Download } from 'lucide-react';
 import { useTokenStore } from '../../store/useTokenStore';
+import { authorizedFetch } from '../../lib/api-client';
 
 export default function TrendAnalyzer() {
   const navigate = useNavigate();
-  const { deductToken } = useTokenStore();
+  const { deductToken, fetchBalance } = useTokenStore();
   const [niche, setNiche] = useState('');
   const [platform, setPlatform] = useState('TikTok');
   const [loading, setLoading] = useState(false);
@@ -14,10 +15,13 @@ export default function TrendAnalyzer() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!deductToken(1)) {
+    
+    // Optimistic check
+    if (!await deductToken(0.5)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }
+    
     setLoading(true);
     setResults([]);
 
@@ -25,9 +29,8 @@ export default function TrendAnalyzer() {
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
     try {
-      const response = await fetch('/api/tools/trend-analyzer', {
+      const response = await authorizedFetch('/api/tools/trend-analyzer', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ niche, platform }),
         signal: controller.signal,
       });
@@ -35,6 +38,8 @@ export default function TrendAnalyzer() {
       
       const data = await response.json();
       if (data.success) {
+        fetchBalance(); // Sync balance
+        
         // Clean markdown if present
         let cleanJson = data.data.replace(/```json\n?|\n?```/g, '').trim();
         try {
@@ -52,7 +57,9 @@ export default function TrendAnalyzer() {
       }
     } catch (error: any) {
       console.error(error);
-      if (error.name === 'AbortError') {
+      if (error.message === 'Saldo Tidak Cukup') {
+         alert('Saldo Tidak Cukup! Silakan top-up.');
+      } else if (error.name === 'AbortError') {
         alert('Waktu habis! Permintaan memakan waktu terlalu lama. Silakan coba lagi.');
       } else {
         alert('Terjadi kesalahan saat menghubungi server.');
