@@ -99,40 +99,22 @@ export default function Login() {
           </div>
           <div className="space-y-4">
             <button
-              className="focus:shadow-outline w-full rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 focus:outline-none"
+              className="focus:shadow-outline w-full rounded-lg bg-blue-600 px-4 py-3 font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               type="submit"
             >
               Sign In
             </button>
-            <button
-              type="button"
-              className="focus:shadow-outline w-full rounded border border-gray-300 bg-gray-100 px-4 py-2 font-bold text-gray-700 hover:bg-gray-200 focus:outline-none"
-              onClick={() => {
-                const savedEmail = localStorage.getItem('lastRegisteredEmail');
-                const savedPassword = localStorage.getItem('lastRegisteredPassword');
-                
-                if (savedEmail) {
-                  setEmail(savedEmail);
-                  setPassword(savedPassword || 'password123');
-                } else {
-                  setEmail('test@example.com');
-                  setPassword('password123');
-                }
-              }}
-            >
-              Auto Fill (Last Registered)
-            </button>
             
-            <div className="relative flex items-center justify-center border-t border-gray-200 py-2">
+            <div className="relative flex items-center justify-center border-t border-gray-200 py-4">
               <span className="absolute bg-white px-2 text-sm text-gray-500">Or continue with</span>
             </div>
 
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="focus:shadow-outline flex w-full items-center justify-center rounded border border-gray-300 bg-white px-4 py-2 font-bold text-gray-700 hover:bg-gray-50 focus:outline-none"
+              className="focus:shadow-outline flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2"
             >
-              <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+              <svg className="mr-2 h-5 w-5" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
                 <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
               </svg>
               Sign in with Google

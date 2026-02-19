@@ -111,23 +111,12 @@ export default function Register() {
           </div>
           <div className="space-y-4">
             <button
-              className="focus:shadow-outline w-full rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 focus:outline-none"
+              className="focus:shadow-outline w-full rounded-lg bg-blue-600 px-4 py-3 font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               type="submit"
             >
               Register
             </button>
-            <button
-              type="button"
-              className="focus:shadow-outline w-full rounded border border-gray-300 bg-gray-100 px-4 py-2 font-bold text-gray-700 hover:bg-gray-200 focus:outline-none"
-              onClick={() => {
-                const randomId = Math.random().toString(36).substring(7);
-                setEmail(`test${randomId}@example.com`);
-                setPassword('password123');
-                setConfirmPassword('password123');
-              }}
-            >
-              Auto Fill (New User)
-            </button>
+            
             <div className="text-right">
               <Link
                 className="inline-block align-baseline text-sm font-bold text-blue-500 hover:text-blue-800"

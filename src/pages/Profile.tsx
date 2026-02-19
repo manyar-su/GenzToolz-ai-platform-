@@ -12,17 +12,15 @@ export default function Profile() {
   const [searchParams] = useSearchParams();
   const { 
     isLoggedIn, name, avatar, email, referralCode, affiliateStats,
-    logout, updateName, generateRandomAvatar, sendOtp, verifyOtp 
+    logout, updateName, generateRandomAvatar, loginOrRegister 
   } = useUserStore();
   const { tokens, addToken, transferToken } = useTokenStore();
   const { showAlert, showConfirm } = useAlert();
   const { theme, toggleTheme } = useTheme();
   
   // Auth State
-  const [step, setStep] = useState<'email' | 'otp'>('email');
   const [authName, setAuthName] = useState('');
   const [authEmail, setAuthEmail] = useState('');
-  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -47,7 +45,7 @@ export default function Profile() {
     }
   }, [searchParams, isLoggedIn]);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleLoginRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -58,38 +56,22 @@ export default function Profile() {
         return;
     }
 
-    const result = await sendOtp(authEmail);
+    const refCode = searchParams.get('ref') || localStorage.getItem('genz_ref_code');
+    const result = await loginOrRegister(authEmail, authName, refCode);
     
     if (result.success) {
-        setStep('otp');
+        // Login Success & Profile Created/Loaded
+        showAlert('Berhasil Masuk!', 'success');
+        
+        // Anti-Spam Check: Only 1 bonus per device
+        const hasBonus = localStorage.getItem('genz_device_bonus');
+        if (!hasBonus) {
+            localStorage.setItem('genz_device_bonus', 'true');
+            setWelcomeMessage(true);
+            setTimeout(() => setWelcomeMessage(false), 5000); 
+        }
     } else {
-        setError(result.error || 'Gagal mengirim kode OTP');
-    }
-    setLoading(false);
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    const refCode = searchParams.get('ref') || localStorage.getItem('genz_ref_code');
-
-    const result = await verifyOtp(authEmail, otp, authName, refCode);
-
-    if (result.success) {
-         // Login Success & Profile Created/Loaded
-         showAlert('Login Berhasil!', 'success');
-         
-         // Anti-Spam Check: Only 1 bonus per device (if new user logic needed, but store handles it)
-         const hasBonus = localStorage.getItem('genz_device_bonus');
-         if (!hasBonus) {
-             localStorage.setItem('genz_device_bonus', 'true');
-             setWelcomeMessage(true);
-             setTimeout(() => setWelcomeMessage(false), 5000); 
-         }
-    } else {
-        setError(result.error || 'Kode OTP salah atau kedaluwarsa');
+        setError(result.error || 'Gagal login/daftar. Cek koneksi atau email.');
     }
     setLoading(false);
   };
@@ -147,101 +129,25 @@ export default function Profile() {
   if (!isLoggedIn) {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 dark:bg-gray-900 transition-colors duration-200">
-            {/* Theme Toggle - Top Right */}
-            <button 
-                onClick={toggleTheme}
-                className="absolute top-4 right-4 rounded-full bg-white p-3 text-gray-600 shadow-md transition hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
-                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
-
             <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl dark:bg-gray-800 transition-colors duration-200">
                 <div className="text-center mb-8">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
                         <User className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {step === 'email' ? 'Gabung Member GenzTools' : 'Verifikasi OTP'}
+                        Profil GenzTools
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400">
-                        {step === 'email' 
-                            ? <span>Daftar sekarang & dapatkan <span className="font-bold text-yellow-500">10 Token Gratis!</span></span>
-                            : `Kode 6 digit telah dikirim ke ${authEmail}`
-                        }
+                        Silakan login untuk melihat profil Anda.
                     </p>
                 </div>
-
-                <form onSubmit={step === 'email' ? handleSendOtp : handleVerifyOtp} className="space-y-4">
-                    {error && (
-                        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                            {error}
-                        </div>
-                    )}
-
-                    {step === 'email' ? (
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nama Lengkap</label>
-                                <input 
-                                    required
-                                    type="text" 
-                                    value={authName}
-                                    onChange={(e) => setAuthName(e.target.value)}
-                                    className="mt-1 w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                    placeholder="Nama Kamu"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                                <input 
-                                    required
-                                    type="email" 
-                                    value={authEmail}
-                                    onChange={(e) => setAuthEmail(e.target.value)}
-                                    className="mt-1 w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                    placeholder="email@contoh.com"
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Kode OTP (6 Digit)</label>
-                            <input 
-                                required
-                                type="text" 
-                                maxLength={6}
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                                className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-center text-2xl font-bold tracking-widest focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                placeholder="000000"
-                            />
-                        </div>
-                    )}
-                    
-                    {searchParams.get('ref') && step === 'email' && (
-                        <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
-                            <span className="font-bold">Info:</span> Kamu diundang oleh teman (Kode: {searchParams.get('ref')})
-                        </div>
-                    )}
-
-                    <button 
-                        type="submit"
-                        disabled={loading}
-                        className="w-full flex items-center justify-center rounded-lg bg-blue-600 py-3 font-bold text-white transition hover:bg-blue-700 disabled:opacity-50"
-                    >
-                        {loading ? <Loader2 className="animate-spin h-5 w-5" /> : (step === 'email' ? 'Kirim Kode' : 'Verifikasi & Masuk')}
-                    </button>
-
-                    {step === 'otp' && (
-                        <button 
-                            type="button"
-                            onClick={() => setStep('email')}
-                            className="mt-2 w-full text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400"
-                        >
-                            Ganti Email
-                        </button>
-                    )}
-                </form>
+                
+                <button 
+                    onClick={() => navigate('/login')} 
+                    className="w-full flex items-center justify-center rounded-lg bg-blue-600 py-3 font-bold text-white transition hover:bg-blue-700"
+                >
+                    Login Sekarang
+                </button>
                 
                 <button onClick={() => navigate('/')} className="mt-4 w-full text-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
                     Kembali ke Dashboard

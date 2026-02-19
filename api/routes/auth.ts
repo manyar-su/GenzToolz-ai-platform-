@@ -81,6 +81,18 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       return
     }
 
+    // Special logic for test account
+    if (email === 'test@gmail.com') {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ balance_tokens: 1000 })
+        .eq('id', data.user.id)
+      
+      if (updateError) {
+        console.error('Failed to set test tokens:', updateError)
+      }
+    }
+
     res.status(200).json({
       success: true,
       data: {
