@@ -11,7 +11,7 @@ export default function Profile() {
   const [searchParams] = useSearchParams();
   const { 
     isLoggedIn, name, avatar, email, referralCode, affiliateStats,
-    logout, updateName, updateAvatar, generateRandomAvatar, syncProfile 
+    logout, updateName, generateRandomAvatar, syncProfile 
   } = useUserStore();
   const { tokens, addToken, transferToken } = useTokenStore();
   const { showAlert, showConfirm } = useAlert();

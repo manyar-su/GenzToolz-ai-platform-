@@ -1,57 +1,89 @@
-# React + TypeScript + Vite
+# 🚀 GenZTools - The Ultimate Creator Toolkit 🎨✨
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Selamat datang di **GenZTools**! Platform serba bisa yang dirancang khusus untuk para konten kreator Gen-Z yang ingin meningkatkan produktivitas dan kreativitas mereka ke level berikutnya! 🌟🚀
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🔥 Fitur Utama (Features) 🔥
 
-## Expanding the ESLint configuration
+Kami menyediakan berbagai *tools* canggih bertenaga AI untuk membantu kamu membuat konten yang viral dan *engaging*:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 📝 Content Creation & Writing
+*   **📜 Script Architect**: Buat naskah video TikTok/Reels yang *hooking* dalam hitungan detik! ✍️
+*   **📈 Trend Analyzer**: Temukan topik *trending* terkini biar kontenmu nggak ketinggalan zaman! 📊
+*   **🏷️ Caption & Hashtag Generator**: Bikin caption kece + hashtag relevan otomatis. Bye-bye writer's block! 📝
+*   **🎣 Viral Hook Generator**: Dapatkan ide *hook* yang bikin penonton betah nonton sampai habis! 🪝
+*   **🐦 Video-to-Short Script**: Ubah video panjang jadi skrip pendek yang padat dan jelas. ✂️
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+### 🎨 Visual & Design
+*   **🎨 AI Color Palette**: Bingung pilih warna? AI kami akan buatkan palet warna yang estetik buat brand kamu! 🌈
+*   **🖼️ Thumbnail A/B Tester**: Cek potensi klik thumbnail YouTube kamu sebelum di-upload. 🖱️
+*   **🎬 Color Grading Suggester**: Dapatkan rekomendasi *grading* video biar makin sinematik! 🎥
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 🛠️ Utilities & Productivity
+*   **💬 Comment Reply Automation**: Balas komentar netizen dengan gaya bahasa yang asik dan natural. 🤖
+*   **📅 Scheduler Suggestion**: Kapan waktu terbaik buat posting? Kami punya jawabannya! ⏰
+*   **🔍 YouTube SEO Optimizer**: Optimalkan judul, deskripsi, dan tag video YouTube kamu biar gampang ditemukan. 🔎
+*   **🕵️ Competitor Analyzer**: Intip strategi kompetitor dan pelajari rahasia sukses mereka. 🕵️‍♂️
+*   **🎁 Giveaway Picker**: Pilih pemenang giveaway secara adil dan transparan. 🎉
+*   **👻 Shadowban Checker**: Cek kesehatan akun sosmed kamu, apakah kena shadowban atau aman sentosa. 🛡️
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default tseslint.config({
-  extends: [
-    // other configs...
-    // Enable lint rules for React
-    reactX.configs['recommended-typescript'],
-    // Enable lint rules for React DOM
-    reactDom.configs.recommended,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## 💎 Sistem Token & Membership 💎
+
+*   **🪙 Token System**: Setiap penggunaan *tool* menggunakan token. Hemat dan efisien!
+*   **🎁 Welcome Bonus**: Daftar sekarang dan dapatkan **10 Token GRATIS** langsung! 🤑
+*   **🤝 Affiliate Program**: Undang temanmu dan dapatkan komisi token setiap kali mereka top-up! Cuan bareng bestie! 👯‍♂️
+
+---
+
+## 🛠️ Tech Stack (Teknologi di Balik Layar) 💻
+
+Project ini dibangun dengan cinta dan teknologi terkini:
+
+*   **Frontend**: React ⚛️ + Vite ⚡ + Tailwind CSS 🌬️
+*   **Backend**: Node.js + Express 🚂
+*   **Database & Auth**: Supabase 🔥 (PostgreSQL)
+*   **AI Engine**: Google Gemini 🧠
+*   **Deployment**: Vercel ▲
+
+---
+
+## 🚀 Cara Menjalankan (How to Run) 🏃‍♂️
+
+1.  **Clone Repository**
+    ```bash
+    git clone https://github.com/manyar-su/genztools2.git
+    cd genztools2
+    ```
+
+2.  **Install Dependencies**
+    ```bash
+    pnpm install
+    # atau
+    npm install
+    ```
+
+3.  **Setup Environment Variables**
+    Buat file `.env` dan isi dengan konfigurasi Supabase & Gemini API Key kamu.
+
+4.  **Jalankan Development Server**
+    ```bash
+    pnpm run dev
+    # atau
+    npm run dev
+    ```
+
+5.  **Buka di Browser**
+    Kunjungi `http://localhost:5173` dan mulai berkarya! 🎉
+
+---
+
+## 🤝 Kontribusi (Contribution)
+
+Mau ikut berkontribusi? Boleh banget! Silakan *fork* repository ini, buat *branch* baru, dan kirim *pull request*. Kita bangun *tools* ini bareng-bareng! 💪
+
+---
+
+**Happy Creating!** ✨🎬🚀
