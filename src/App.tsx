@@ -35,6 +35,8 @@ import BioOptimizer from "@/pages/tools/BioOptimizer";
 import ThumbnailTester from "@/pages/tools/ThumbnailTester";
 import ColorGrading from "@/pages/tools/ColorGrading";
 import SmartVideoClipper from "@/pages/tools/SmartVideoClipper";
+import ObjectRemover from "@/pages/tools/ObjectRemover";
+import WatermarkRemover from "@/pages/tools/WatermarkRemover";
 
 export default function App() {
   return (
@@ -80,8 +82,8 @@ export default function App() {
           <Route path="/tools/color-grading" element={<ColorGrading />} />
           <Route path="/tools/smart-clipper" element={<SmartVideoClipper />} />
           
-          <Route path="/tools/object-remover" element={<div className="text-center mt-20 text-xl font-bold text-gray-500">Feature Coming Soon</div>} />
-          <Route path="/tools/watermark-remover" element={<div className="text-center mt-20 text-xl font-bold text-gray-500">Feature Coming Soon</div>} />
+          <Route path="/tools/object-remover" element={<ObjectRemover />} />
+          <Route path="/tools/watermark-remover" element={<WatermarkRemover />} />
           <Route path="/tools/voice-cloning" element={<div className="text-center mt-20 text-xl font-bold text-gray-500">Feature Coming Soon (Requires GPU)</div>} />
           
           <Route path="/affiliate" element={<Affiliate />} />
