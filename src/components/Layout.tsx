@@ -163,8 +163,16 @@ export default function Layout({ children }: LayoutProps) {
               <span>{tokens}</span>
             </div>
 
+            {/* Theme Toggle */}
+            <button 
+                onClick={toggleTheme}
+                className="rounded-full p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+            >
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+
             {/* User Profile */}
-            <div className="flex items-center gap-3 border-l border-gray-200 pl-4 dark:border-gray-700">
+            <Link to="/profile" className="flex items-center gap-3 border-l border-gray-200 pl-4 dark:border-gray-700 hover:opacity-80 transition-opacity">
               <div className="hidden text-right md:block">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{name}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Member</p>
@@ -174,7 +182,7 @@ export default function Layout({ children }: LayoutProps) {
                 alt="Profile" 
                 className="h-8 w-8 rounded-full bg-white object-cover ring-2 ring-white dark:ring-gray-800"
               />
-            </div>
+            </Link>
           </div>
         </header>
 

@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTokenStore } from '../store/useTokenStore';
 import { useUserStore } from '../store/useUserStore';
 import { useAlert } from '../context/AlertContext';
-import { ArrowLeft, User, Mail, CreditCard, Edit2, RefreshCw, X, Check, Gem, Zap, Crown, Share2, Copy, Users, LogOut, Gift, Send, Loader2 } from 'lucide-react';
+import { useTheme } from '../hooks/useTheme';
+import { ArrowLeft, User, Mail, CreditCard, Edit2, RefreshCw, X, Check, Gem, Zap, Crown, Share2, Copy, Users, LogOut, Gift, Send, Loader2, Moon, Sun } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function Profile() {
@@ -11,13 +12,15 @@ export default function Profile() {
   const [searchParams] = useSearchParams();
   const { 
     isLoggedIn, name, avatar, email, referralCode, affiliateStats,
-    logout, updateName, generateRandomAvatar, syncProfile 
+    logout, updateName, generateRandomAvatar, sendOtp, verifyOtp 
   } = useUserStore();
   const { tokens, addToken, transferToken } = useTokenStore();
   const { showAlert, showConfirm } = useAlert();
+  const { theme, toggleTheme } = useTheme();
   
   // Auth State
   const [step, setStep] = useState<'email' | 'otp'>('email');
+  const [authName, setAuthName] = useState('');
   const [authEmail, setAuthEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
@@ -49,21 +52,20 @@ export default function Profile() {
     setLoading(true);
     setError('');
 
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: authEmail,
-        options: {
-          shouldCreateUser: true,
-        }
-      });
-
-      if (error) throw error;
-      setStep('otp');
-    } catch (err: any) {
-      setError(err.message || 'Gagal mengirim kode OTP');
-    } finally {
-      setLoading(false);
+    if (!authName.trim()) {
+        setError('Nama harus diisi');
+        setLoading(false);
+        return;
     }
+
+    const result = await sendOtp(authEmail);
+    
+    if (result.success) {
+        setStep('otp');
+    } else {
+        setError(result.error || 'Gagal mengirim kode OTP');
+    }
+    setLoading(false);
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
@@ -71,32 +73,25 @@ export default function Profile() {
     setLoading(true);
     setError('');
 
-    try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: authEmail,
-        token: otp,
-        type: 'email',
-      });
+    const refCode = searchParams.get('ref') || localStorage.getItem('genz_ref_code');
 
-      if (error) throw error;
+    const result = await verifyOtp(authEmail, otp, authName, refCode);
 
-      // Login Success
-      if (data.session) {
-         // Sync profile (Store will handle fetching from DB)
-         // Note: If new user, DB trigger creates profile automatically.
-         // We might need a slight delay or retry if trigger is slow, 
-         // but useUserStore.syncProfile() should handle it.
-         await syncProfile(); // You might need to expose this or create a method to load from session
+    if (result.success) {
+         // Login Success & Profile Created/Loaded
+         showAlert('Login Berhasil!', 'success');
          
-         // Temporary fix: Reload page to ensure store initializes correctly from session
-         window.location.reload(); 
-      }
-
-    } catch (err: any) {
-      setError('Kode OTP salah atau kedaluwarsa');
-    } finally {
-      setLoading(false);
+         // Anti-Spam Check: Only 1 bonus per device (if new user logic needed, but store handles it)
+         const hasBonus = localStorage.getItem('genz_device_bonus');
+         if (!hasBonus) {
+             localStorage.setItem('genz_device_bonus', 'true');
+             setWelcomeMessage(true);
+             setTimeout(() => setWelcomeMessage(false), 5000); 
+         }
+    } else {
+        setError(result.error || 'Kode OTP salah atau kedaluwarsa');
     }
+    setLoading(false);
   };
 
   const handleLogout = () => {
@@ -116,10 +111,6 @@ export default function Profile() {
     addToken(amount);
     alert(`Berhasil top-up ${amount} Token! (${price})`);
     setIsTopupModalOpen(false);
-    
-    // Simulate Affiliate Bonus Trigger
-    // In real app, this runs on backend webhook after payment success
-    // if (referredBy) { db.addBonus(referredBy, amount * 0.2) }
   };
 
   const handleTransfer = () => {
@@ -155,8 +146,16 @@ export default function Profile() {
 
   if (!isLoggedIn) {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 dark:bg-gray-900">
-            <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl dark:bg-gray-800">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 dark:bg-gray-900 transition-colors duration-200">
+            {/* Theme Toggle - Top Right */}
+            <button 
+                onClick={toggleTheme}
+                className="absolute top-4 right-4 rounded-full bg-white p-3 text-gray-600 shadow-md transition hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+
+            <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl dark:bg-gray-800 transition-colors duration-200">
                 <div className="text-center mb-8">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
                         <User className="h-8 w-8 text-blue-600 dark:text-blue-400" />
@@ -180,16 +179,29 @@ export default function Profile() {
                     )}
 
                     {step === 'email' ? (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                            <input 
-                                required
-                                type="email" 
-                                value={authEmail}
-                                onChange={(e) => setAuthEmail(e.target.value)}
-                                className="mt-1 w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                placeholder="email@contoh.com"
-                            />
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nama Lengkap</label>
+                                <input 
+                                    required
+                                    type="text" 
+                                    value={authName}
+                                    onChange={(e) => setAuthName(e.target.value)}
+                                    className="mt-1 w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    placeholder="Nama Kamu"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                                <input 
+                                    required
+                                    type="email" 
+                                    value={authEmail}
+                                    onChange={(e) => setAuthEmail(e.target.value)}
+                                    className="mt-1 w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    placeholder="email@contoh.com"
+                                />
+                            </div>
                         </div>
                     ) : (
                         <div>
@@ -231,7 +243,7 @@ export default function Profile() {
                     )}
                 </form>
                 
-                <button onClick={() => navigate('/')} className="mt-4 w-full text-center text-sm text-gray-500 hover:text-gray-700">
+                <button onClick={() => navigate('/')} className="mt-4 w-full text-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
                     Kembali ke Dashboard
                 </button>
             </div>
@@ -240,14 +252,24 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-900 md:p-8">
+    <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-900 md:p-8 transition-colors duration-200">
       <div className="mx-auto max-w-5xl">
-        <button 
-          onClick={() => navigate('/')}
-          className="mb-6 flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Dashboard
-        </button>
+        <div className="flex items-center justify-between mb-6">
+            <button 
+            onClick={() => navigate('/')}
+            className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+            >
+            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Dashboard
+            </button>
+
+            {/* Theme Toggle - Logged In View */}
+            <button 
+                onClick={toggleTheme}
+                className="rounded-full bg-white p-2 text-gray-600 shadow-sm transition hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+        </div>
 
         {/* Welcome Notification */}
         {welcomeMessage && (
@@ -266,7 +288,7 @@ export default function Profile() {
             {/* Left Column: Profile & Actions */}
             <div className="lg:col-span-2 space-y-8">
                 {/* Profile Card */}
-                <div className="overflow-hidden rounded-2xl bg-white shadow-lg dark:bg-gray-800">
+                <div className="overflow-hidden rounded-2xl bg-white shadow-lg dark:bg-gray-800 transition-colors duration-200">
                   <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600 md:h-40"></div>
                   <div className="relative px-6 pb-8 md:px-8">
                     <div className="absolute -top-16 flex flex-col items-center md:-top-16 md:items-start">
@@ -335,7 +357,7 @@ export default function Profile() {
                 </div>
 
                 {/* Affiliate Dashboard */}
-                <div className="rounded-2xl bg-white p-6 shadow-lg dark:bg-gray-800">
+                <div className="rounded-2xl bg-white p-6 shadow-lg dark:bg-gray-800 transition-colors duration-200">
                     <div className="mb-6 flex items-center justify-between">
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                             <Users className="h-6 w-6 text-purple-500" />
@@ -407,7 +429,7 @@ export default function Profile() {
                     </div>
                 </div>
 
-                <div className="rounded-2xl bg-white p-6 shadow-lg dark:bg-gray-800">
+                <div className="rounded-2xl bg-white p-6 shadow-lg dark:bg-gray-800 transition-colors duration-200">
                     <h3 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">Status Member</h3>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between border-b border-gray-100 pb-3 dark:border-gray-700">

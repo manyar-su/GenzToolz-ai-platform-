@@ -17,7 +17,8 @@ interface UserState {
   affiliateStats: AffiliateStats;
   
   // Actions
-  login: (email: string, name: string, refCode?: string | null) => Promise<boolean>; 
+  sendOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
+  verifyOtp: (email: string, code: string, name: string, refCode?: string | null) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateName: (name: string) => Promise<void>;
   generateRandomAvatar: () => Promise<void>;
@@ -37,34 +38,65 @@ export const useUserStore = create<UserState>((set, get) => ({
     totalBonusEarned: 0
   },
 
-  login: async (email, name, refCode = null) => {
+  sendOtp: async (email) => {
     try {
-      // 1. Sign Up / Sign In with Supabase Auth
-      // Note: For simplicity in this demo, we'll use signUp. 
-      // In prod, handle "User already registered" by trying signIn.
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password: 'temporary-password-123', // Hardcoded for demo simplicity
-      });
-
-      let userId = authData.user?.id;
-
-      if (authError) {
-         // If user exists, try signing in (Simulated flow for demo)
-         // In real app, user would enter password.
-         if (authError.message.includes('already registered')) {
-             const { data: signInData } = await supabase.auth.signInWithPassword({
-                 email,
-                 password: 'temporary-password-123'
-             });
-             userId = signInData.user?.id;
-         } else {
-             console.error("Auth Error:", authError);
-             return false;
-         }
+      // 0. Admin Bypass
+      if (email === 'mariezibrahim93@gmail.com') {
+          return { success: true };
       }
 
-      if (!userId) return false;
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: true }
+      });
+      if (error) throw error;
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  },
+
+  verifyOtp: async (email, code, name, refCode = null) => {
+    try {
+      let authData;
+      let authError;
+
+      // 0. Admin Bypass Login
+      if (email === 'mariezibrahim93@gmail.com') {
+          // Try Login with default admin password
+          const { data, error } = await supabase.auth.signInWithPassword({
+              email,
+              password: 'admin-password-123' 
+          });
+          
+          if (error) {
+              // If not found/wrong password, try Registering with that password
+              const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                  email,
+                  password: 'admin-password-123',
+                  options: {
+                      data: { full_name: name }
+                  }
+              });
+              
+              if (signUpError) throw signUpError;
+              authData = signUpData;
+          } else {
+              authData = data;
+          }
+      } else {
+          // Normal User OTP Login
+          const { data, error } = await supabase.auth.verifyOtp({
+            email,
+            token: code,
+            type: 'email'
+          });
+          if (error) throw error;
+          authData = data;
+      }
+      
+      const userId = authData.session?.user.id;
+      if (!userId) throw new Error("No session created");
 
       // 2. Check if Profile exists
       const { data: profile } = await supabase
@@ -84,9 +116,8 @@ export const useUserStore = create<UserState>((set, get) => ({
             referralCode: profile.referral_code,
             referredBy: profile.referred_by,
         });
-        return false; // Not a new user
       } else {
-        // 3. Create New Profile (Welcome Bonus 10 Tokens handled by DB Default or Manual)
+        // Create New Profile
         const generatedRefCode = name.substring(0, 3).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
         
         // Resolve Referred By ID
@@ -110,7 +141,7 @@ export const useUserStore = create<UserState>((set, get) => ({
 
         if (profileError) {
             console.error("Profile Creation Error:", profileError);
-            return false;
+            return { success: false, error: "Gagal membuat profil" };
         }
 
         set({
@@ -120,15 +151,15 @@ export const useUserStore = create<UserState>((set, get) => ({
             avatar: newProfile.avatar_url,
             email: email,
             referralCode: generatedRefCode,
-            referredBy: referrerId ? refCode : null,
+            referredBy: referrerId ? (refCode || null) : null,
         });
-        
-        return true; // Is new user
       }
 
-    } catch (err) {
-      console.error("Login Failed:", err);
-      return false;
+      return { success: true };
+
+    } catch (err: any) {
+      console.error("Verify OTP Error:", err);
+      return { success: false, error: err.message };
     }
   },
 
