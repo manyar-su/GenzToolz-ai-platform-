@@ -1019,7 +1019,7 @@ function simulateSubtitleProcessing(jobId: string, removeWatermark: boolean) {
   }, 12000);
 }
 
-///**
+/**
  * RapidAPI Proxy
  * Authenticated but free (pre-check)
  */
