@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Image as ImageIcon, Download, Info } from 'lucide-react';
 import { useTokenStore } from '../../store/useTokenStore';
+import { useAlert } from '../../context/AlertContext';
 
 export default function TextToVisual() {
   const navigate = useNavigate();
   const { deductToken } = useTokenStore();
+  const { showConfirm } = useAlert();
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -14,7 +16,15 @@ export default function TextToVisual() {
     e.preventDefault();
     
     if (!deductToken(1)) {
-        alert('Token tidak cukup! Silakan top-up.');
+        showConfirm(
+            'Token Anda tidak mencukupi untuk menggunakan tools ini. Silakan Top-up terlebih dahulu.',
+            () => navigate('/topup'),
+            {
+                title: 'Saldo Tidak Cukup',
+                confirmText: 'Top Up Sekarang',
+                cancelText: 'Batal'
+            }
+        );
         return;
     }
 

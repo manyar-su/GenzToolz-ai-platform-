@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Eraser, Upload, Download, Info } from 'lucide-react';
 import { useTokenStore } from '../../store/useTokenStore';
+import { useAlert } from '../../context/AlertContext';
 
 export default function ObjectRemover() {
   const navigate = useNavigate();
   const { deductToken } = useTokenStore();
+  const { showConfirm, showAlert } = useAlert();
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -26,8 +28,16 @@ export default function ObjectRemover() {
     if (!image) return;
     
     // Optimistic check
-    if (!deductToken(1)) { // Client-side check only for mock
-        alert('Token tidak cukup! Silakan top-up.');
+    if (!deductToken(1)) {
+        showConfirm(
+            'Token Anda tidak mencukupi untuk menggunakan tools ini. Silakan Top-up terlebih dahulu.',
+            () => navigate('/topup'),
+            {
+                title: 'Saldo Tidak Cukup',
+                confirmText: 'Top Up Sekarang',
+                cancelText: 'Batal'
+            }
+        );
         return;
     }
 
@@ -40,7 +50,7 @@ export default function ObjectRemover() {
       // For now, we just return the original image to simulate "success" 
       // or we could apply a CSS filter to show something changed
       setResult(image); 
-      alert("Objek berhasil dihapus! (Simulasi: Gambar dikembalikan)");
+      showAlert("Objek berhasil dihapus! (Simulasi: Gambar dikembalikan)", 'success');
     }, 3000);
   };
 
