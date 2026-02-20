@@ -1,132 +1,136 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useUserStore } from '@/store/useUserStore';
+import { Mail, Lock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { syncProfile } = useUserStore(); // Assume we might need this or direct supabase
+
+  useEffect(() => {
+    // Check if redirected from register
+    const params = new URLSearchParams(location.search);
+    if (params.get('registered') === 'true') {
+      setSuccessMsg('Registrasi berhasil! Silakan login.');
+    }
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
+      // Login via API to get session AND profile data in one go (or use client directly)
+      // Let's use the API endpoint we made to ensure we get the full user object including profile
       const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+      if (!data.success) {
+          throw new Error(data.error || 'Login gagal');
       }
-
-      // Store session/token if needed, for now just redirect
-      // Assuming the backend returns session data, we might want to store it in context or local storage
-      console.log('Login successful:', data);
       
-      // Also update client-side session to match backend
+      // Update Supabase Client Session
       if (data.data?.session) {
-        await supabase.auth.setSession(data.data.session);
+          const { error: sessError } = await supabase.auth.setSession(data.data.session);
+          if (sessError) throw sessError;
+          
+          // Also update local store with user details immediately if needed
+          // Or let the layout/store listener handle it. 
+          // For now, let's force a reload or store update if possible.
+          // But navigate is enough, the store should pick up session on mount.
       }
-      
-      navigate('/dashboard');
+
+      navigate('/');
     } catch (err: any) {
       setError(err.message);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-
-      if (error) throw error;
-    } catch (err: any) {
-      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
-        <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">Login</h2>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl dark:bg-gray-800">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">GenzTools</h1>
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Selamat Datang Kembali</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Silakan login untuk melanjutkan</p>
+        </div>
+
+        {successMsg && (
+             <div className="mb-6 rounded-lg bg-green-50 p-4 text-sm text-green-600 dark:bg-green-900/20 dark:text-green-400">
+             {successMsg}
+           </div>
+        )}
+
         {error && (
-          <div className="mb-4 rounded bg-red-100 p-3 text-sm text-red-700">
+          <div className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
             {error}
           </div>
         )}
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="mb-2 block text-sm font-bold text-gray-700" htmlFor="email">
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Email
             </label>
-            <input
-              className="focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow focus:outline-none"
-              id="email"
-              type="email"
-              placeholder="Email"
-              value={email}
-              autoComplete="email"
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <div className="relative">
+                <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <input
+                className="w-full rounded-xl border border-gray-300 bg-white pl-10 pr-4 py-3 text-gray-900 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:focus:border-blue-400"
+                type="email"
+                placeholder="email@contoh.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                />
+            </div>
           </div>
-          <div className="mb-6">
-            <label className="mb-2 block text-sm font-bold text-gray-700" htmlFor="password">
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Password
             </label>
-            <input
-              className="focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow focus:outline-none"
-              id="password"
-              type="password"
-              placeholder="******************"
-              value={password}
-              autoComplete="current-password"
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-4">
-            <button
-              className="focus:shadow-outline w-full rounded-lg bg-blue-600 px-4 py-3 font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              type="submit"
-            >
-              Sign In
-            </button>
-            
-            <div className="relative flex items-center justify-center border-t border-gray-200 py-4">
-              <span className="absolute bg-white px-2 text-sm text-gray-500">Or continue with</span>
+             <div className="relative">
+                <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <input
+                className="w-full rounded-xl border border-gray-300 bg-white pl-10 pr-4 py-3 text-gray-900 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:focus:border-blue-400"
+                type="password"
+                placeholder="********"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                />
             </div>
-
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              className="focus:shadow-outline flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2"
-            >
-              <svg className="mr-2 h-5 w-5" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
-                <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
-              </svg>
-              Sign in with Google
-            </button>
           </div>
+
+          <button
+            className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3.5 font-bold text-white shadow-lg shadow-blue-500/30 transition hover:scale-[1.02] hover:shadow-blue-500/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? 'Memproses...' : 'Masuk'}
+          </button>
           
-          <div className="mt-4 text-center">
+          <div className="text-center mt-4">
              <Link
-              className="inline-block align-baseline text-sm font-bold text-blue-500 hover:text-blue-800"
+              className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
               to="/register"
             >
-              Don't have an account? Register
+              Belum punya akun? Daftar
             </Link>
           </div>
         </form>

@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Copy, Check, Info, Download } from 'lucide-react';
 import { useTokenStore } from '../../store/useTokenStore';
+import { useAlert } from '../../context/AlertContext';
+import { authorizedFetch } from '../../lib/api-client';
 
 export default function VideoToShort() {
   const navigate = useNavigate();
   const { deductToken } = useTokenStore();
+  const { showAlert } = useAlert();
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
@@ -13,8 +16,9 @@ export default function VideoToShort() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!deductToken(1)) {
-        alert('Token tidak cukup! Silakan top-up.');
+        showAlert('Token tidak cukup! Silakan top-up.', 'warning');
         return;
     }
     setLoading(true);
@@ -24,9 +28,8 @@ export default function VideoToShort() {
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
     try {
-      const response = await fetch('/api/tools/video-to-short', {
+      const response = await authorizedFetch('/api/tools/video-to-short', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text_content: content }),
         signal: controller.signal,
       });
@@ -36,14 +39,14 @@ export default function VideoToShort() {
       if (data.success) {
         setResult(data.data);
       } else {
-        alert(data.error || 'Gagal menghasilkan naskah');
+        showAlert(data.error || 'Gagal menghasilkan naskah', 'error');
       }
     } catch (error: any) {
       console.error(error);
       if (error.name === 'AbortError') {
-        alert('Waktu habis! Permintaan memakan waktu terlalu lama. Silakan coba lagi.');
+        showAlert('Waktu habis! Permintaan memakan waktu terlalu lama. Silakan coba lagi.', 'error');
       } else {
-        alert('Terjadi kesalahan saat menghubungi server.');
+        showAlert('Terjadi kesalahan saat menghubungi server.', 'error');
       }
     } finally {
       setLoading(false);

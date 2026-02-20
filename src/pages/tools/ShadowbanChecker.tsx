@@ -24,7 +24,7 @@ export default function ShadowbanChecker() {
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const response = await fetch('/api/tools/shadowban-checker', {
+      const response = await authorizedFetch('/api/tools/shadowban-checker', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, platform }),

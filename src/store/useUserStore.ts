@@ -17,6 +17,8 @@ interface UserState {
   affiliateStats: AffiliateStats;
   
   // Actions
+  initializeGuest: () => Promise<void>;
+  adminLogin: (username: string, password: string) => Promise<boolean>;
   sendOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
   verifyOtp: (email: string, code: string, name: string, refCode?: string | null) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -38,11 +40,72 @@ export const useUserStore = create<UserState>((set, get) => ({
     totalBonusEarned: 0
   },
 
+  initializeGuest: async () => {
+      // Restore session from Supabase client
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+          // Fetch profile data
+          const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+          
+          if (profile) {
+              set({
+                  isLoggedIn: true,
+                  id: profile.id,
+                  name: profile.full_name,
+                  avatar: profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.full_name}`,
+                  email: profile.email,
+                  referralCode: profile.user_code || profile.referral_code, // Use user_code if available
+                  referredBy: profile.referred_by,
+              });
+              // Sync additional stats
+              get().syncProfile();
+          }
+      }
+  },
+
+  adminLogin: async (username, password) => {
+      try {
+          const response = await fetch('/api/auth/admin-login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username, password })
+          });
+          const data = await response.json();
+          
+          if (data.success) {
+              set({
+                  isLoggedIn: true,
+                  id: data.data.user.id,
+                  name: 'Admin',
+                  email: data.data.user.email,
+                  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'
+              });
+              // Store admin token in localStorage for API client to pick up
+              localStorage.setItem('admin_token', data.data.token);
+              return true;
+          }
+          return false;
+      } catch (e) {
+          console.error(e);
+          return false;
+      }
+  },
+
   sendOtp: async (email) => {
     try {
       // 0. Admin Bypass
       if (email === 'mariezibrahim93@gmail.com') {
           return { success: true };
+      }
+
+      // 1. Dev Mode Bypass
+      if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
+        return { success: true };
       }
 
       const { error } = await supabase.auth.signInWithOtp({
@@ -60,6 +123,20 @@ export const useUserStore = create<UserState>((set, get) => ({
     try {
       let authData;
       let authError;
+
+      // 0. Dev Mode Bypass
+      if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
+          set({
+              isLoggedIn: true,
+              id: 'mock-user-id',
+              name: name || 'Dev User',
+              avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name || 'Dev'}`,
+              email: email,
+              referralCode: 'DEV123',
+              referredBy: null,
+          });
+          return { success: true };
+      }
 
       // 0. Admin Bypass Login
       if (email === 'mariezibrahim93@gmail.com') {
@@ -178,6 +255,12 @@ export const useUserStore = create<UserState>((set, get) => ({
     const { id } = get();
     if (!id) return;
     
+    // Mock for local dev without Supabase
+    if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
+        set({ name });
+        return;
+    }
+
     // Using RPC for secure update
     const { error } = await supabase.rpc('update_profile', { p_full_name: name });
     
@@ -195,6 +278,12 @@ export const useUserStore = create<UserState>((set, get) => ({
     const randomSeed = Math.random().toString(36).substring(7);
     const newAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${randomSeed}`;
     
+    // Mock for local dev without Supabase
+    if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
+        set({ avatar: newAvatar });
+        return;
+    }
+
     // Using RPC for secure update
     const { error } = await supabase.rpc('update_profile', { p_avatar_url: newAvatar });
 
@@ -206,6 +295,10 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
 
   syncProfile: async () => {
+    // Mock for local dev without Supabase
+    if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
+        return;
+    }
       const { id } = get();
       if (!id) return;
 

@@ -23,7 +23,7 @@ export default function ColorGrading() {
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const response = await fetch('/api/tools/color-grading', {
+      const response = await authorizedFetch('/api/tools/color-grading', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mood }),

@@ -25,7 +25,7 @@ export default function BioOptimizer() {
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const response = await fetch('/api/tools/bio-optimizer', {
+      const response = await authorizedFetch('/api/tools/bio-optimizer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ current_bio: currentBio, niche }),

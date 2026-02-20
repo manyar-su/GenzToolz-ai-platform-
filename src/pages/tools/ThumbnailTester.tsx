@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Info, Eye, BarChart2 } from 'lucide-react';
+import { authorizedFetch } from '../../lib/api-client';
 import { useTokenStore } from '../../store/useTokenStore';
 
 export default function ThumbnailTester() {
@@ -24,7 +25,7 @@ export default function ThumbnailTester() {
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const response = await fetch('/api/tools/thumbnail-tester', {
+      const response = await authorizedFetch('/api/tools/thumbnail-tester', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description_a: descA, description_b: descB }),

@@ -18,7 +18,7 @@ export default function BrandPitch() {
     e.preventDefault();
     
     // Optimistic check
-    if (!await deductToken(0.5)) {
+    if (!await deductToken(1)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }
@@ -92,7 +92,7 @@ export default function BrandPitch() {
                   <strong>Cara Penggunaan:</strong> Masukkan nama brand yang ingin Anda ajak kerjasama, niche konten Anda, dan jumlah followers. 
                   AI akan membuatkan email penawaran profesional.
                   <br/>
-                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 0.5 Token per generate.</span>
+                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 1 Token per generate.</span>
                 </p>
               </div>
             </div>

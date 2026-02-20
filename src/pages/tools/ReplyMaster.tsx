@@ -25,7 +25,7 @@ export default function ReplyMaster() {
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const response = await fetch('/api/tools/reply-master', {
+      const response = await authorizedFetch('/api/tools/reply-master', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ comment, tone }),

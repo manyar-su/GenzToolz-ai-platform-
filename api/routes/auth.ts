@@ -8,49 +8,96 @@ import { supabase } from '../lib/supabase.js'
 const router = Router()
 
 /**
- * User Registration
+ * User Registration (Standard Email/Password + Custom User ID)
  * POST /api/auth/register
  */
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
-  const { email, password } = req.body
+  const { email, password, full_name, ref_code } = req.body
 
-  if (!email || !password) {
+  if (!email || !password || !full_name) {
     res.status(400).json({
       success: false,
-      error: 'Email and password are required',
+      error: 'Name, Email and Password are required',
     })
     return
   }
 
   try {
-    const { data, error } = await supabase.auth.signUp({
+    // 1. Sign Up in Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: { full_name }
+      }
     })
 
-    if (error) {
-      res.status(400).json({
-        success: false,
-        error: error.message,
-      })
+    if (authError) {
+      res.status(400).json({ success: false, error: authError.message })
       return
+    }
+
+    if (!authData.user) {
+        res.status(500).json({ success: false, error: 'Failed to create user' })
+        return
+    }
+
+    // 2. Generate Custom User ID (genz-xxxxx)
+    const randomCode = Math.floor(10000 + Math.random() * 90000);
+    const userCode = `genz-${randomCode}`;
+
+    // 3. Create Profile Entry
+    // Note: We use the UUID from authData.user.id as the primary key
+    // but store userCode for display/referral
+    const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([{
+            id: authData.user.id,
+            email: email,
+            full_name: full_name,
+            user_code: userCode,
+            referral_code: userCode, // Same as user_code for simplicity
+            balance_tokens: 10, // Bonus 10 Token
+            referred_by: ref_code ? (await getReferrerId(ref_code)) : null
+        }]);
+    
+    if (profileError) {
+        console.error('Profile creation failed:', profileError);
+        // If profile fails, we might want to delete the auth user or retry
+        // For now, just return error
+        res.status(500).json({ success: false, error: 'Failed to create profile: ' + profileError.message });
+        return;
     }
 
     res.status(200).json({
       success: true,
       data: {
-        user: data.user,
-        session: data.session,
+        user: {
+            ...authData.user,
+            user_code: userCode,
+            balance_tokens: 10
+        },
+        session: authData.session,
       },
     })
-  } catch (err) {
+  } catch (err: any) {
     console.error('Registration error:', err)
     res.status(500).json({
       success: false,
-      error: 'Internal server error',
+      error: err.message || 'Internal server error',
     })
   }
 })
+
+// Helper to find referrer UUID by code
+async function getReferrerId(code: string): Promise<string | null> {
+    const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_code', code) // Look up by user_code (genz-xxxxx)
+        .single();
+    return data?.id || null;
+}
 
 /**
  * User Login
@@ -60,10 +107,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body
 
   if (!email || !password) {
-    res.status(400).json({
-      success: false,
-      error: 'Email and password are required',
-    })
+    res.status(400).json({ success: false, error: 'Email and password are required' })
     return
   }
 
@@ -74,38 +118,30 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     })
 
     if (error) {
-      res.status(401).json({
-        success: false,
-        error: error.message,
-      })
+      res.status(401).json({ success: false, error: error.message })
       return
     }
 
-    // Special logic for test account
-    if (email === 'test@gmail.com') {
-      const { error: updateError } = await supabase
+    // Fetch profile to get user_code
+    const { data: profile } = await supabase
         .from('profiles')
-        .update({ balance_tokens: 1000 })
+        .select('*')
         .eq('id', data.user.id)
-      
-      if (updateError) {
-        console.error('Failed to set test tokens:', updateError)
-      }
-    }
+        .single();
 
     res.status(200).json({
       success: true,
       data: {
-        user: data.user,
+        user: {
+            ...data.user,
+            ...profile // Merge profile data
+        },
         session: data.session,
       },
     })
-  } catch (err) {
+  } catch (err: any) {
     console.error('Login error:', err)
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-    })
+    res.status(500).json({ success: false, error: err.message })
   }
 })
 
@@ -149,5 +185,106 @@ router.post('/logout', async (req: Request, res: Response): Promise<void> => {
     })
   }
 })
+
+/**
+ * Guest Initialization
+ * POST /api/auth/guest-init
+ */
+router.post('/guest-init', async (req: Request, res: Response): Promise<void> => {
+  const { guest_id, ref_code } = req.body; // Accept referral code
+  
+  // Generate shorter ID: genz-XXXXX
+  const randomCode = Math.floor(10000 + Math.random() * 90000); // 5 digit random number
+  const newGuestId = `genz-${randomCode}`;
+  
+  const userId = guest_id || newGuestId;
+
+  // Bypass Supabase if placeholder
+  const isPlaceholderSupabase = process.env.SUPABASE_URL?.includes('placeholder') || false;
+  if (isPlaceholderSupabase) {
+      res.status(200).json({
+          success: true,
+          data: {
+              user: {
+                  id: userId,
+                  role: 'guest',
+                  referral_code: userId // Use ID as referral code for simplicity
+              }
+          }
+      });
+      return;
+  }
+
+  try {
+      // Check if guest exists
+      const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+      if (!existingUser) {
+          // Create new guest profile with 10 free tokens
+          const { error } = await supabase
+              .from('profiles')
+              .insert([{
+                  id: userId,
+                  full_name: `User ${userId}`,
+                  balance_tokens: 10,
+                  role: 'guest',
+                  referral_code: userId, // ID itself is the referral code
+                  referred_by: ref_code || null // Store who referred this user
+              }]);
+          
+          if (error) {
+              console.error('Failed to create guest profile:', error);
+              // Retry with new ID if collision (rare for 5 digits but possible)
+              // For simplicity, we just fail or let client retry
+          }
+      }
+
+      res.status(200).json({
+          success: true,
+          data: {
+              user: {
+                  id: userId,
+                  role: 'guest',
+                  referral_code: userId
+              }
+          }
+      });
+  } catch (err: any) {
+      console.error('Guest init error:', err);
+      res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Admin Login (Simple)
+ * POST /api/auth/admin-login
+ */
+router.post('/admin-login', async (req: Request, res: Response): Promise<void> => {
+    const { username, password } = req.body;
+    
+    const adminUser = process.env.VITE_ADMIN_USERNAME || 'admin';
+    const adminPass = process.env.VITE_ADMIN_PASSWORD || 'adminsu';
+
+    if (username === adminUser && password === adminPass) {
+        res.status(200).json({
+            success: true,
+            data: {
+                user: {
+                    id: 'admin_user',
+                    role: 'admin',
+                    email: 'admin@genztools.com'
+                },
+                token: 'admin-secret-token'
+            }
+        });
+        return;
+    }
+
+    res.status(401).json({ success: false, error: 'Invalid credentials' });
+});
 
 export default router

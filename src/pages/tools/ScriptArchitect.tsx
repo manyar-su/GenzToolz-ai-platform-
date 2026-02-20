@@ -17,7 +17,7 @@ export default function ScriptArchitect() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!await deductToken(0.5)) {
+    if (!await deductToken(1)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }
@@ -95,7 +95,7 @@ export default function ScriptArchitect() {
                   <strong>Cara Penggunaan:</strong> Masukkan topik konten Anda, pilih platform, dan formula copywriting. 
                   AI akan membuatkan naskah video lengkap dengan hook yang menarik.
                   <br/>
-                  <span className="mt-2 block font-semibold text-blue-900">Biaya: 0.5 Token per generate.</span>
+                  <span className="mt-2 block font-semibold text-blue-900">Biaya: 1 Token per generate.</span>
                 </p>
               </div>
             </div>

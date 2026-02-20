@@ -10,11 +10,15 @@ interface Clip {
   id: string;
   title: string;
   type: string;
+  summary?: string;
   startTime: string;
   duration: string;
+  startSeconds?: number;
+  endSeconds?: number;
   previewUrl: string;
   fullUrl: string;
   score: number;
+  source?: 'youtube' | 'file';
 }
 
 interface JobStatus {
@@ -22,6 +26,7 @@ interface JobStatus {
   status: 'queued' | 'processing' | 'completed' | 'failed';
   progress: number;
   result?: {
+    durationSeconds?: number;
     clips: Clip[];
   };
   error?: string;
@@ -124,6 +129,7 @@ export default function SmartVideoClipper() {
   };
 
   const sourceId = getSourceId(videoUrl);
+  const isYouTubePreview = !!selectedClip?.previewUrl?.includes('youtube.com/embed');
 
   return (
     <div className="min-h-screen p-8">
@@ -305,6 +311,12 @@ export default function SmartVideoClipper() {
                     </div>
                   </div>
                 )}
+                {job.status === 'failed' && (
+                  <div className="rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-100 dark:bg-gray-800 dark:ring-gray-700">
+                    <h3 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">Proses Gagal</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{job.error || 'Terjadi kesalahan saat memproses video.'}</p>
+                  </div>
+                )}
 
                 {/* Result Preview */}
                 {job.status === 'completed' && job.result && (
@@ -321,18 +333,31 @@ export default function SmartVideoClipper() {
                       </div>
 
                       <div className="relative mx-auto aspect-[9/16] w-full max-w-sm overflow-hidden rounded-2xl bg-black shadow-2xl">
-                        <video 
-                          key={selectedClip?.id} // Force re-render on change
-                          src={selectedClip?.previewUrl} 
-                          controls 
-                          autoPlay 
-                          loop
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            console.error("Video Error:", e);
-                            showAlert("Gagal memuat preview video. Pastikan koneksi internet stabil.", 'error');
-                          }}
-                        />
+                        {isYouTubePreview ? (
+                          <iframe
+                            key={selectedClip?.id}
+                            src={selectedClip?.previewUrl}
+                            className="h-full w-full"
+                            title={`Preview ${selectedClip?.title}`}
+                            loading="lazy"
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                          />
+                        ) : (
+                          <video 
+                            key={selectedClip?.id}
+                            src={selectedClip?.previewUrl} 
+                            controls 
+                            autoPlay 
+                            loop
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              console.error("Video Error:", e);
+                              showAlert("Gagal memuat preview video. Pastikan koneksi internet stabil.", 'error');
+                            }}
+                          />
+                        )}
                         {/* Watermark Overlay Simulation */}
                         <div className="pointer-events-none absolute bottom-8 right-4 opacity-50">
                           <span className="font-black text-white drop-shadow-md">GenzTools</span>
@@ -341,10 +366,21 @@ export default function SmartVideoClipper() {
 
                       {selectedClip && (
                         <div className="mt-6 space-y-4">
-                          <div className="flex justify-between text-sm">
+                          <div className="flex flex-wrap justify-between gap-2 text-sm">
                             <span className="text-gray-500 dark:text-gray-400">Timestamp: <span className="font-mono text-gray-900 dark:text-white">{selectedClip.startTime}</span></span>
                             <span className="text-gray-500 dark:text-gray-400">Durasi: <span className="font-mono text-gray-900 dark:text-white">{selectedClip.duration}</span></span>
+                            {selectedClip.startSeconds !== undefined && selectedClip.endSeconds !== undefined && (
+                              <span className="text-gray-500 dark:text-gray-400">Start–End: <span className="font-mono text-gray-900 dark:text-white">{selectedClip.startSeconds}s–{selectedClip.endSeconds}s</span></span>
+                            )}
                           </div>
+                          {job.result?.durationSeconds && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Durasi video: <span className="font-mono text-gray-900 dark:text-white">{job.result.durationSeconds}s</span></div>
+                          )}
+                          {selectedClip.summary && (
+                            <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                              {selectedClip.summary}
+                            </div>
+                          )}
                           
                           <div className="grid gap-3">
                             <button
@@ -375,6 +411,9 @@ export default function SmartVideoClipper() {
                             <div>
                               <h4 className="font-bold text-gray-900 dark:text-white">{clip.title}</h4>
                               <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{clip.type}</p>
+                              {clip.summary && (
+                                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{clip.summary}</p>
+                              )}
                             </div>
                             <div className="flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-xs font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                               <Eye className="h-3 w-3" />
@@ -382,7 +421,7 @@ export default function SmartVideoClipper() {
                             </div>
                           </div>
                           
-                          <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                          <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                             <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               Start: {clip.startTime}
@@ -391,6 +430,12 @@ export default function SmartVideoClipper() {
                               <Film className="h-3 w-3" />
                               Durasi: {clip.duration}
                             </div>
+                            {clip.startSeconds !== undefined && clip.endSeconds !== undefined && (
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {clip.startSeconds}s–{clip.endSeconds}s
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}

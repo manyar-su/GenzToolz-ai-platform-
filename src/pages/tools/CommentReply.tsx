@@ -17,7 +17,7 @@ export default function CommentReply() {
     e.preventDefault();
     
     // Optimistic check
-    if (!await deductToken(0.2)) {
+    if (!await deductToken(1)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }
@@ -95,7 +95,7 @@ export default function CommentReply() {
                   <strong>Cara Penggunaan:</strong> Tempel komentar netizen yang ingin dibalas. 
                   AI akan membuatkan balasan yang ramah dan engaging.
                   <br/>
-                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 0.2 Token per generate.</span>
+                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 1 Token per generate.</span>
                 </p>
               </div>
             </div>

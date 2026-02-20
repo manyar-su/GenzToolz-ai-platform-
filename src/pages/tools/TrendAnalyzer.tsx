@@ -17,7 +17,7 @@ export default function TrendAnalyzer() {
     e.preventDefault();
     
     // Optimistic check
-    if (!await deductToken(0.5)) {
+    if (!await deductToken(1)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }

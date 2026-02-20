@@ -28,6 +28,12 @@ export const useTokenStore = create<TokenState>((set, get) => ({
   loading: false,
 
   fetchBalance: async () => {
+    // Mock for local dev without Supabase
+    if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
+        set({ tokens: 1000 }); // Infinite tokens for dev
+        return;
+    }
+
     const userId = useUserStore.getState().id;
     if (!userId) return;
 

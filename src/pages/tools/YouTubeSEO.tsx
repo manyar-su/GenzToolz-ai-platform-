@@ -17,7 +17,7 @@ export default function YouTubeSEO() {
     e.preventDefault();
     
     // Check local balance first (Optimistic)
-    if (!await deductToken(0.2)) {
+    if (!await deductToken(1)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }
@@ -104,7 +104,7 @@ export default function YouTubeSEO() {
                   <strong>Cara Penggunaan:</strong> Masukkan judul dan deskripsi video Anda. 
                   AI akan memberikan rekomendasi judul clickbait, tags relevan, dan deskripsi SEO.
                   <br/>
-                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 0.2 Token per generate.</span>
+                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 1 Token per generate.</span>
                 </p>
               </div>
             </div>

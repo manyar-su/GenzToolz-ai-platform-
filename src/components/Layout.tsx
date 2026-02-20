@@ -17,6 +17,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useTokenStore } from '../store/useTokenStore';
 
 import { useUserStore } from '../store/useUserStore';
+import { ShieldCheck } from 'lucide-react'; // Import ShieldCheck
 
 interface LayoutProps {
   children: ReactNode;
@@ -29,6 +30,7 @@ export default function Layout({ children }: LayoutProps) {
   const { tokens } = useTokenStore();
   const { name, avatar } = useUserStore();
   const location = useLocation();
+  const isAdmin = useUserStore(state => state.name === 'Admin'); // Check admin status
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
@@ -37,6 +39,10 @@ export default function Layout({ children }: LayoutProps) {
     { icon: Wallet, label: 'Top-up Token', path: '/topup' },
     { icon: User, label: 'Profile', path: '/profile' },
   ];
+
+  if (isAdmin) {
+    menuItems.push({ icon: ShieldCheck, label: 'Admin Panel', path: '/admin' });
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
@@ -166,23 +172,48 @@ export default function Layout({ children }: LayoutProps) {
             {/* Theme Toggle */}
             <button 
                 onClick={toggleTheme}
-                className="rounded-full p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+                className="rounded-full p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors mr-2"
             >
                 {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
 
+            {/* Admin Access Button (Visible to everyone to access login) */}
+            {!isAdmin && (
+              <Link 
+                to="/admin" 
+                className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 mr-2"
+                title="Admin Login"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                <span className="hidden sm:inline">Admin</span>
+              </Link>
+            )}
+
             {/* User Profile */}
-            <Link to="/profile" className="flex items-center gap-3 border-l border-gray-200 pl-4 dark:border-gray-700 hover:opacity-80 transition-opacity">
-              <div className="hidden text-right md:block">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Member</p>
-              </div>
-              <img 
-                src={avatar} 
-                alt="Profile" 
-                className="h-8 w-8 rounded-full bg-white object-cover ring-2 ring-white dark:ring-gray-800"
-              />
-            </Link>
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Link 
+                  to="/admin" 
+                  className="flex items-center gap-1 rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 mr-2"
+                  title="Admin Panel"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  <span className="hidden sm:inline">Admin Panel</span>
+                </Link>
+              )}
+              
+              <Link to="/profile" className="flex items-center gap-3 border-l border-gray-200 pl-4 dark:border-gray-700 hover:opacity-80 transition-opacity">
+                <div className="hidden text-right md:block">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Member</p>
+                </div>
+                <img 
+                  src={avatar} 
+                  alt="Profile" 
+                  className="h-8 w-8 rounded-full bg-white object-cover ring-2 ring-white dark:ring-gray-800"
+                />
+              </Link>
+            </div>
           </div>
         </header>
 

@@ -16,7 +16,7 @@ export default function SchedulerSuggestion() {
     e.preventDefault();
     
     // Optimistic check
-    if (!await deductToken(0.5)) {
+    if (!await deductToken(1)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }
@@ -94,7 +94,7 @@ export default function SchedulerSuggestion() {
                   <p>
                     <strong>Cara Penggunaan:</strong> Pilih platform dan target audiens. AI akan menganalisa waktu posting terbaik untuk engagement maksimal.
                     <br/>
-                    <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 0.5 Token per generate.</span>
+                    <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 1 Token per generate.</span>
                   </p>
                 </div>
               </div>

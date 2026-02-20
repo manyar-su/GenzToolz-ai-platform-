@@ -19,7 +19,7 @@ export default function ViralHookGenerator() {
     e.preventDefault();
     
     // Optimistic check
-    if (!await deductToken(0.2)) {
+    if (!await deductToken(1)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }
@@ -124,7 +124,7 @@ export default function ViralHookGenerator() {
                   <strong>Cara Penggunaan:</strong> Masukkan topik video Anda dan target audiens. 
                   AI akan membuatkan 10 hook yang memancing rasa penasaran.
                   <br/>
-                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 0.2 Token per generate.</span>
+                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 1 Token per generate.</span>
                 </p>
               </div>
             </div>

@@ -65,7 +65,7 @@ export default function AllInOneDownloader() {
             if (!videoId) throw new Error('ID Video YouTube tidak valid.');
 
             // Use our backend proxy to call RapidAPI
-            const response = await fetch(`/api/tools/rapidapi/youtube/details?videoId=${videoId}`);
+            const response = await authorizedFetch(`/api/tools/rapidapi/youtube/details?videoId=${videoId}`);
             const data = await response.json();
 
             if (data.success && data.data) {

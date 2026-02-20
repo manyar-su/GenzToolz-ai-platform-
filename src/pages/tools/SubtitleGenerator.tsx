@@ -32,7 +32,7 @@ export default function SubtitleGenerator() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/tools/auto-subtitle/status/${job.id}`);
+        const res = await authorizedFetch(`/api/tools/auto-subtitle/status/${job.id}`);
         const data = await res.json();
         if (data.success) {
           setJob(data.data);
@@ -71,7 +71,7 @@ export default function SubtitleGenerator() {
       // formData.append('file', file);
       // formData.append('userStatus', userStatus);
 
-      const response = await fetch('/api/tools/auto-subtitle/start', {
+      const response = await authorizedFetch('/api/tools/auto-subtitle/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

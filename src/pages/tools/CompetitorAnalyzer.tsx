@@ -23,7 +23,7 @@ export default function CompetitorAnalyzer() {
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const response = await fetch('/api/tools/competitor-analyzer', {
+      const response = await authorizedFetch('/api/tools/competitor-analyzer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ competitor_url: competitorUrl }),

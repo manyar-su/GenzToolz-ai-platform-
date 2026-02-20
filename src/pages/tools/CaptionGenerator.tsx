@@ -17,7 +17,7 @@ export default function CaptionGenerator() {
     e.preventDefault();
     
     // Optimistic check
-    if (!await deductToken(0.2)) {
+    if (!await deductToken(1)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }
@@ -108,7 +108,7 @@ export default function CaptionGenerator() {
                   <strong>Cara Penggunaan:</strong> Jelaskan isi postingan Anda (foto/video) dan pilih nada bicara (tone). 
                   AI akan membuatkan caption menarik beserta hashtag yang relevan agar masuk FYP.
                   <br/>
-                  <span className="mt-2 block font-semibold text-blue-900">Biaya: 0.2 Token per generate.</span>
+                  <span className="mt-2 block font-semibold text-blue-900">Biaya: 1 Token per generate.</span>
                 </p>
               </div>
             </div>

@@ -1,10 +1,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AlertProvider } from "@/context/AlertContext";
+import { useEffect } from 'react';
+import { useUserStore } from "@/store/useUserStore";
 import Layout from "@/components/Layout";
 import SupabaseCheck from "@/components/SupabaseCheck";
 import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import History from "@/pages/History";
+import Admin from "@/pages/Admin";
+import Topup from "@/pages/Topup";
 
 // Tools
 import ScriptArchitect from "@/pages/tools/ScriptArchitect";
@@ -39,6 +43,13 @@ import ObjectRemover from "@/pages/tools/ObjectRemover";
 import WatermarkRemover from "@/pages/tools/WatermarkRemover";
 
 export default function App() {
+  console.log('App component rendering...');
+  const { initializeGuest } = useUserStore();
+
+  useEffect(() => {
+    initializeGuest();
+  }, [initializeGuest]);
+
   return (
     <AlertProvider>
       <Router>
@@ -48,6 +59,7 @@ export default function App() {
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/history" element={<History />} />
+          <Route path="/admin" element={<Admin />} />
           
           {/* Tool Routes */}
           <Route path="/tools/script-architect" element={<ScriptArchitect />} />
@@ -87,7 +99,7 @@ export default function App() {
           <Route path="/tools/voice-cloning" element={<div className="text-center mt-20 text-xl font-bold text-gray-500">Feature Coming Soon (Requires GPU)</div>} />
           
           <Route path="/affiliate" element={<Affiliate />} />
-          <Route path="/topup" element={<div className="text-center text-xl text-gray-500 mt-10">Top-up Feature Coming Soon</div>} />
+          <Route path="/topup" element={<Topup />} />
           <Route path="/other" element={<div className="text-center text-xl">Other Page - Coming Soon</div>} />
         </Routes>
       </Layout>

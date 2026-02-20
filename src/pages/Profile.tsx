@@ -4,8 +4,9 @@ import { useTokenStore } from '../store/useTokenStore';
 import { useUserStore } from '../store/useUserStore';
 import { useAlert } from '../context/AlertContext';
 import { useTheme } from '../hooks/useTheme';
-import { ArrowLeft, User, Mail, CreditCard, Edit2, RefreshCw, X, Check, Gem, Zap, Crown, Share2, Copy, Users, LogOut, Gift, Send, Loader2, Moon, Sun } from 'lucide-react';
+import { ArrowLeft, User, Mail, CreditCard, Edit2, RefreshCw, X, Check, Gem, Zap, Crown, Share2, Copy, Users, LogOut, Gift, Send, Loader2, Moon, Sun, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { authorizedFetch } from '../lib/api-client';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export default function Profile() {
     isLoggedIn, name, avatar, email, referralCode, affiliateStats,
     logout, updateName, generateRandomAvatar, loginOrRegister 
   } = useUserStore();
-  const { tokens, addToken, transferToken } = useTokenStore();
+  const { tokens, transferToken, fetchBalance } = useTokenStore();
   const { showAlert, showConfirm } = useAlert();
   const { theme, toggleTheme } = useTheme();
   
@@ -26,22 +27,42 @@ export default function Profile() {
   
   // Profile State
   const [isEditingName, setIsEditingName] = useState(false);
+  const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
   const [newName, setNewName] = useState(name);
-  const [isTopupModalOpen, setIsTopupModalOpen] = useState(false);
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [walletTab, setWalletTab] = useState<'topup' | 'transfer' | 'history'>('topup');
   const [welcomeMessage, setWelcomeMessage] = useState(false);
   
   // Transfer State
   const [transferReceiver, setTransferReceiver] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [transferMessage, setTransferMessage] = useState('');
+  const [topupLoading, setTopupLoading] = useState(false);
+  const [topupError, setTopupError] = useState('');
+  const [topupStatus, setTopupStatus] = useState<'IDLE' | 'PENDING' | 'SUCCESS' | 'FAILED'>('IDLE');
+  const [topupData, setTopupData] = useState<null | {
+    transactionId: string;
+    referenceNo?: string;
+    qrImageUrl?: string;
+    qrString?: string;
+    amount: number;
+    tokens: number;
+    packageName: string;
+  }>(null);
 
   // Handle URL Ref Code
   useEffect(() => {
     const refCode = searchParams.get('ref');
+    const action = searchParams.get('action');
+
     if (refCode && !isLoggedIn) {
         // Logic to store refCode temporarily until registration
         localStorage.setItem('genz_ref_code', refCode);
+    }
+
+    if (action === 'topup') {
+        setIsWalletModalOpen(true);
+        setWalletTab('topup');
     }
   }, [searchParams, isLoggedIn]);
 
@@ -89,10 +110,44 @@ export default function Profile() {
     setIsEditingName(false);
   };
 
-  const handleTopup = (amount: number, price: string) => {
-    addToken(amount);
-    alert(`Berhasil top-up ${amount} Token! (${price})`);
-    setIsTopupModalOpen(false);
+  const handleGenerateAvatar = async () => {
+    setIsGeneratingAvatar(true);
+    try {
+      await generateRandomAvatar();
+    } catch (error) {
+      console.error('Failed to generate avatar:', error);
+    } finally {
+      setIsGeneratingAvatar(false);
+    }
+  };
+
+  const handleTopup = async (amount: number, price: number, packageName: string) => {
+    setTopupLoading(true);
+    setTopupError('');
+    setTopupStatus('IDLE');
+    setTopupData(null);
+
+    try {
+      const response = await authorizedFetch('/api/tools/qris/topup/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          amount: price,
+          tokens: amount,
+          packageName
+        })
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Gagal membuat QRIS');
+      }
+      setTopupData(data.data);
+      setTopupStatus('PENDING');
+    } catch (err: any) {
+      setTopupError(err.message || 'Gagal membuat QRIS');
+      showAlert(err.message || 'Gagal membuat QRIS', 'error');
+    } finally {
+      setTopupLoading(false);
+    }
   };
 
   const handleTransfer = () => {
@@ -126,6 +181,47 @@ export default function Profile() {
     showAlert('Kode berhasil disalin ke clipboard!', 'success');
   };
 
+  useEffect(() => {
+    if (!isWalletModalOpen) {
+      setTopupLoading(false);
+      setTopupError('');
+      setTopupStatus('IDLE');
+      setTopupData(null);
+    }
+  }, [isWalletModalOpen]);
+
+  useEffect(() => {
+    if (!topupData?.transactionId || topupStatus !== 'PENDING') return;
+
+    let active = true;
+    const interval = setInterval(async () => {
+      try {
+        const response = await authorizedFetch(`/api/tools/qris/topup/status?transactionId=${topupData.transactionId}`);
+        const result = await response.json();
+        if (!result.success) return;
+        const status = String(result.data?.status || '').toUpperCase();
+        if (!active) return;
+        if (status === 'SUCCESS' || status === 'PAID') {
+          setTopupStatus('SUCCESS');
+          showAlert('Pembayaran berhasil. Token masuk otomatis.', 'success');
+          await fetchBalance();
+          clearInterval(interval);
+        } else if (status === 'FAILED' || status === 'FAIL' || status === 'EXPIRED') {
+          setTopupStatus('FAILED');
+          showAlert('Pembayaran gagal atau kedaluwarsa.', 'error');
+          clearInterval(interval);
+        }
+      } catch {
+        if (!active) return;
+      }
+    }, 5000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [topupData?.transactionId, topupStatus, fetchBalance, showAlert]);
+
   if (!isLoggedIn) {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 dark:bg-gray-900 transition-colors duration-200">
@@ -145,9 +241,7 @@ export default function Profile() {
                 <button 
                     onClick={() => navigate('/login')} 
                     className="w-full flex items-center justify-center rounded-lg bg-blue-600 py-3 font-bold text-white transition hover:bg-blue-700"
-                >
-                    Login Sekarang
-                </button>
+                >Login Sekarang</button>
                 
                 <button onClick={() => navigate('/')} className="mt-4 w-full text-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
                     Kembali ke Dashboard
@@ -194,7 +288,10 @@ export default function Profile() {
             {/* Left Column: Profile & Actions */}
             <div className="lg:col-span-2 space-y-8">
                 {/* Profile Card */}
-                <div className="overflow-hidden rounded-2xl bg-white shadow-lg dark:bg-gray-800 transition-colors duration-200">
+                <div 
+                  className="overflow-hidden rounded-2xl bg-white shadow-lg dark:bg-gray-800 transition-colors duration-200"
+                  data-template-id="profile-card-template"
+                >
                   <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600 md:h-40"></div>
                   <div className="relative px-6 pb-8 md:px-8">
                     <div className="absolute -top-16 flex flex-col items-center md:-top-16 md:items-start">
@@ -205,11 +302,12 @@ export default function Profile() {
                           className="h-32 w-32 rounded-full border-4 border-white bg-white object-cover shadow-md dark:border-gray-800 dark:bg-gray-700"
                         />
                         <button 
-                          onClick={generateRandomAvatar}
-                          className="absolute bottom-2 right-2 rounded-full bg-white p-2 shadow-lg hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600"
+                          onClick={handleGenerateAvatar}
+                          disabled={isGeneratingAvatar}
+                          className={`absolute bottom-2 right-2 rounded-full bg-white p-2 shadow-lg hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all ${isGeneratingAvatar ? 'opacity-75 cursor-not-allowed' : ''}`}
                           title="Acak Avatar"
                         >
-                          <RefreshCw className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                          <RefreshCw className={`h-4 w-4 text-gray-600 dark:text-gray-300 ${isGeneratingAvatar ? 'animate-spin' : ''}`} />
                         </button>
                       </div>
                     </div>
@@ -239,12 +337,19 @@ export default function Profile() {
                             </button>
                           </div>
                         )}
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{email} • Gen-Z Creator</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{email}</p>
+                        <div className="mt-1 flex items-center gap-2 rounded-md bg-gray-100 px-2 py-1 dark:bg-gray-700 w-fit">
+                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">ID:</span>
+                            <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 select-all">{referralCode}</span>
+                            <button onClick={() => copyToClipboard(referralCode)} className="text-gray-400 hover:text-blue-500" title="Salin ID">
+                                <Copy className="h-3 w-3" />
+                            </button>
+                        </div>
                       </div>
 
                       <div className="flex gap-3">
                           <button
-                            onClick={() => setIsTopupModalOpen(true)}
+                            onClick={() => { setIsWalletModalOpen(true); setWalletTab('topup'); }}
                             className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-yellow-400 to-orange-500 px-6 py-3 font-bold text-white shadow-lg transition transform hover:scale-105 hover:shadow-xl"
                           >
                             <Gem className="h-5 w-5" />
@@ -321,16 +426,10 @@ export default function Profile() {
                     </div>
                     <div className="flex gap-3">
                         <button 
-                            onClick={() => setIsTopupModalOpen(true)}
-                            className="w-full rounded-lg bg-white/10 py-2 text-sm font-semibold backdrop-blur-sm transition hover:bg-white/20"
-                        >
-                            Riwayat Transaksi
-                        </button>
-                        <button 
-                            onClick={() => setIsTransferModalOpen(true)}
+                            onClick={() => { setIsWalletModalOpen(true); setWalletTab('topup'); }}
                             className="w-full rounded-lg bg-yellow-400 py-2 text-sm font-bold text-black shadow-lg transition hover:bg-yellow-300"
                         >
-                            <Send className="mr-1 inline h-4 w-4" /> Kirim Token
+                            <CreditCard className="mr-1 inline h-4 w-4" /> Kelola Token & Transaksi
                         </button>
                     </div>
                 </div>
@@ -355,151 +454,259 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Transfer Token Modal */}
-      {isTransferModalOpen && (
+      {/* Unified Wallet Modal */}
+      {isWalletModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800 animate-in fade-in zoom-in duration-200">
-                <div className="mb-6 flex items-center justify-between">
+          <div className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800 animate-in fade-in zoom-in duration-200 flex flex-col md:flex-row h-[600px] md:h-[500px]">
+            
+            {/* Sidebar / Tabs */}
+            <div className="w-full md:w-64 bg-gray-50 dark:bg-gray-900 p-4 flex flex-col gap-2 border-r border-gray-100 dark:border-gray-700">
+                <div className="mb-6 px-2 pt-2">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Send className="h-5 w-5 text-blue-500" /> Kirim Token
+                        <CreditCard className="h-6 w-6 text-yellow-500" /> Wallet
                     </h2>
-                    <button onClick={() => setIsTransferModalOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                        <X className="h-5 w-5" />
-                    </button>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Kelola token & transaksi</p>
                 </div>
-                
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Penerima (Kode Referral / Email)</label>
-                        <input 
-                            type="text" 
-                            value={transferReceiver}
-                            onChange={(e) => setTransferReceiver(e.target.value)}
-                            placeholder="Contoh: USER123"
-                            className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        />
+
+                <button 
+                    onClick={() => setWalletTab('topup')}
+                    className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all ${
+                        walletTab === 'topup' 
+                        ? 'bg-yellow-500 text-white shadow-md' 
+                        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                    }`}
+                >
+                    <Gem className="h-4 w-4" /> Top Up Token
+                </button>
+                <button 
+                    onClick={() => setWalletTab('transfer')}
+                    className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all ${
+                        walletTab === 'transfer' 
+                        ? 'bg-blue-600 text-white shadow-md' 
+                        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                    }`}
+                >
+                    <Send className="h-4 w-4" /> Kirim Token
+                </button>
+                <button 
+                    onClick={() => setWalletTab('history')}
+                    className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all ${
+                        walletTab === 'history' 
+                        ? 'bg-purple-600 text-white shadow-md' 
+                        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                    }`}
+                >
+                    <Clock className="h-4 w-4" /> Riwayat
+                </button>
+
+                <div className="mt-auto">
+                    <div className="rounded-xl bg-gray-900 p-4 text-center text-white dark:bg-black/30">
+                        <p className="text-xs opacity-70">Saldo Kamu</p>
+                        <p className="text-2xl font-bold text-yellow-400">{tokens}</p>
+                        <p className="text-[10px] opacity-50">Token</p>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jumlah Token</label>
-                        <input 
-                            type="number" 
-                            value={transferAmount}
-                            onChange={(e) => setTransferAmount(e.target.value)}
-                            placeholder="Min. 1 Token"
-                            className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pesan (Opsional)</label>
-                        <textarea 
-                            value={transferMessage}
-                            onChange={(e) => setTransferMessage(e.target.value)}
-                            placeholder="Tulis pesan singkat..."
-                            rows={2}
-                            className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        />
-                    </div>
-                    
-                    <button 
-                        onClick={handleTransfer}
-                        disabled={!transferReceiver || !transferAmount}
-                        className="w-full rounded-lg bg-blue-600 py-3 font-bold text-white transition hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed dark:disabled:bg-gray-700"
-                    >
-                        Kirim Token Sekarang
-                    </button>
                 </div>
             </div>
-        </div>
-      )}
 
-      {/* Luxury Dark Mode Top-up Modal */}
-      {isTopupModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-gray-900 text-white shadow-2xl border border-gray-700 animate-in fade-in zoom-in duration-200">
-            <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 p-8">
-              <button 
-                onClick={() => setIsTopupModalOpen(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white"
-              >
-                <X className="h-6 w-6" />
-              </button>
-              
-              <div className="mb-8 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-500/20 ring-4 ring-yellow-500/10">
-                  <Crown className="h-8 w-8 text-yellow-400" />
+            {/* Content Area */}
+            <div className="flex-1 relative bg-white dark:bg-gray-800 flex flex-col">
+                <button 
+                    onClick={() => setIsWalletModalOpen(false)}
+                    className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-600 dark:hover:text-white"
+                >
+                    <X className="h-6 w-6" />
+                </button>
+
+                <div className="flex-1 overflow-y-auto p-6 md:p-8">
+                    
+                    {/* TOP UP TAB */}
+                    {walletTab === 'topup' && (
+                        <div className="animate-in slide-in-from-right-4 duration-200">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Pilih Paket Token</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Metode pembayaran otomatis via QRIS.</p>
+                            
+                            {topupData ? (
+                                <div className="space-y-4 text-center">
+                                    <div className="flex flex-col items-center gap-3 bg-gray-50 dark:bg-gray-900 p-6 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                                        {topupData.qrImageUrl ? (
+                                            <img src={topupData.qrImageUrl} alt="QRIS" className="h-48 w-48 rounded-lg bg-white p-2 shadow-sm" />
+                                        ) : (
+                                            <div className="rounded-xl bg-gray-200 px-4 py-6 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                                                {topupData.qrString || 'QR belum tersedia'}
+                                            </div>
+                                        )}
+                                        {topupData.qrString && (
+                                            <button
+                                                onClick={() => copyToClipboard(topupData.qrString || '')}
+                                                className="text-xs text-blue-600 hover:underline dark:text-blue-400"
+                                            >
+                                                Salin Kode QR
+                                            </button>
+                                        )}
+                                        <div className="text-sm font-semibold">
+                                            Status: <span className={
+                                                topupStatus === 'SUCCESS' ? 'text-green-500' :
+                                                topupStatus === 'FAILED' ? 'text-red-500' :
+                                                'text-yellow-500'
+                                            }>{topupStatus}</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setTopupData(null);
+                                            setTopupStatus('IDLE');
+                                        }}
+                                        className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                                    >
+                                        &larr; Pilih Paket Lain
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="grid gap-4">
+                                    <button 
+                                        onClick={() => handleTopup(13, 10000, 'Starter Pack')}
+                                        disabled={topupLoading}
+                                        className="flex items-center justify-between rounded-xl border border-gray-200 p-4 hover:border-yellow-500 hover:bg-yellow-50 dark:border-gray-700 dark:hover:bg-yellow-900/10 transition-all"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100 font-bold text-yellow-700 dark:bg-yellow-900 dark:text-yellow-400">13</div>
+                                            <div className="text-left">
+                                                <div className="font-bold text-gray-900 dark:text-white">Starter</div>
+                                                <div className="text-xs text-gray-500">10 + 3 Bonus</div>
+                                            </div>
+                                        </div>
+                                        <div className="font-bold text-gray-900 dark:text-white">Rp10k</div>
+                                    </button>
+                                    
+                                    <button 
+                                        onClick={() => handleTopup(65, 50000, 'Creator Pack')}
+                                        disabled={topupLoading}
+                                        className="relative flex items-center justify-between rounded-xl border-2 border-yellow-500 bg-yellow-50/50 p-4 shadow-sm dark:bg-yellow-900/10 transition-all"
+                                    >
+                                        <div className="absolute -top-2.5 left-4 bg-yellow-500 px-2 py-0.5 text-[10px] font-bold text-white rounded-full">POPULAR</div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500 font-bold text-white">65</div>
+                                            <div className="text-left">
+                                                <div className="font-bold text-gray-900 dark:text-white">Creator</div>
+                                                <div className="text-xs text-gray-500">50 + 15 Bonus</div>
+                                            </div>
+                                        </div>
+                                        <div className="font-bold text-gray-900 dark:text-white">Rp50k</div>
+                                    </button>
+
+                                    <button 
+                                        onClick={() => handleTopup(130, 100000, 'Agency Pack')}
+                                        disabled={topupLoading}
+                                        className="flex items-center justify-between rounded-xl border border-gray-200 p-4 hover:border-purple-500 hover:bg-purple-50 dark:border-gray-700 dark:hover:bg-purple-900/10 transition-all"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 font-bold text-purple-700 dark:bg-purple-900 dark:text-purple-400">130</div>
+                                            <div className="text-left">
+                                                <div className="font-bold text-gray-900 dark:text-white">Agency</div>
+                                                <div className="text-xs text-gray-500">100 + 30 Bonus</div>
+                                            </div>
+                                        </div>
+                                        <div className="font-bold text-gray-900 dark:text-white">Rp100k</div>
+                                    </button>
+                                </div>
+                            )}
+                            {topupLoading && <div className="mt-4 text-center text-sm text-gray-500 animate-pulse">Memproses permintaan...</div>}
+                        </div>
+                    )}
+
+                    {/* TRANSFER TAB */}
+                    {walletTab === 'transfer' && (
+                        <div className="animate-in slide-in-from-right-4 duration-200">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Kirim Token</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Transfer token ke sesama pengguna GenzTools.</p>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ID Penerima / Kode Unik</label>
+                                    <div className="relative">
+                                        <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                        <input 
+                                            type="text" 
+                                            value={transferReceiver}
+                                            onChange={(e) => setTransferReceiver(e.target.value)}
+                                            placeholder="Contoh: GENZ8821"
+                                            className="w-full rounded-lg border border-gray-300 pl-10 p-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white uppercase"
+                                        />
+                                    </div>
+                                    <p className="mt-1 text-xs text-gray-400">Masukkan Kode Unik pengguna tujuan.</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jumlah Token</label>
+                                    <div className="relative">
+                                        <Gem className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                        <input 
+                                            type="number" 
+                                            value={transferAmount}
+                                            onChange={(e) => setTransferAmount(e.target.value)}
+                                            placeholder="Min. 1"
+                                            className="w-full rounded-lg border border-gray-300 pl-10 p-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pesan (Opsional)</label>
+                                    <textarea 
+                                        value={transferMessage}
+                                        onChange={(e) => setTransferMessage(e.target.value)}
+                                        placeholder="Tulis pesan singkat..."
+                                        rows={2}
+                                        className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    />
+                                </div>
+                                
+                                <button 
+                                    onClick={handleTransfer}
+                                    disabled={!transferReceiver || !transferAmount}
+                                    className="w-full rounded-lg bg-blue-600 py-3 font-bold text-white transition hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed dark:disabled:bg-gray-700"
+                                >
+                                    Kirim Token
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* HISTORY TAB */}
+                    {walletTab === 'history' && (
+                        <div className="animate-in slide-in-from-right-4 duration-200">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Riwayat Transaksi</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Catatan masuk & keluar token.</p>
+                            
+                            <div className="space-y-3">
+                                {/* Placeholder History Items */}
+                                <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                                            <Gem className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900 dark:text-white">Top Up Creator Pack</p>
+                                            <p className="text-xs text-gray-500">20 Feb 2026</p>
+                                        </div>
+                                    </div>
+                                    <span className="font-bold text-green-600">+65</span>
+                                </div>
+                                <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                                            <Send className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900 dark:text-white">Kirim ke BUDI99</p>
+                                            <p className="text-xs text-gray-500">19 Feb 2026</p>
+                                        </div>
+                                    </div>
+                                    <span className="font-bold text-red-600">-10</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                 </div>
-                <h2 className="text-2xl font-bold text-white">Top Up Token</h2>
-                <p className="text-gray-400">Pilih paket token eksklusif Anda</p>
-              </div>
-
-              <div className="space-y-4">
-                {/* Package 1: 10k */}
-                <button 
-                  onClick={() => handleTopup(13, 'Rp10.000')}
-                  className="group relative flex w-full items-center justify-between rounded-xl border border-gray-700 bg-gray-800/50 p-4 transition-all hover:border-yellow-500/50 hover:bg-gray-800"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-700 font-bold text-gray-300 group-hover:bg-yellow-500 group-hover:text-black">
-                      13
-                    </div>
-                    <div className="text-left">
-                      <div className="font-bold text-lg">Starter Pack</div>
-                      <div className="text-xs text-gray-400">10 Token + <span className="text-yellow-400 font-bold">3 Bonus</span></div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-white">Rp10.000</div>
-                    <div className="text-[10px] text-green-400">Hemat & Efisien</div>
-                  </div>
-                </button>
-
-                {/* Package 2: 50k */}
-                <button 
-                  onClick={() => handleTopup(65, 'Rp50.000')}
-                  className="group relative flex w-full items-center justify-between rounded-xl border border-yellow-600 bg-gray-800 p-4 shadow-lg shadow-yellow-900/20 transition-all hover:bg-gray-700"
-                >
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-yellow-600 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                    Most Popular
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-500 font-bold text-black">
-                      65
-                    </div>
-                    <div className="text-left">
-                      <div className="font-bold text-lg text-yellow-400">Creator Pack</div>
-                      <div className="text-xs text-gray-400">50 Token + <span className="text-yellow-400 font-bold">15 Bonus</span></div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-white">Rp50.000</div>
-                    <div className="text-[10px] text-yellow-400">Best Value</div>
-                  </div>
-                </button>
-
-                {/* Package 3: 100k */}
-                <button 
-                  onClick={() => handleTopup(130, 'Rp100.000')}
-                  className="group relative flex w-full items-center justify-between rounded-xl border border-gray-700 bg-gray-800/50 p-4 transition-all hover:border-purple-500/50 hover:bg-gray-800"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-700 font-bold text-gray-300 group-hover:bg-purple-500 group-hover:text-white">
-                      130
-                    </div>
-                    <div className="text-left">
-                      <div className="font-bold text-lg">Agency Pack</div>
-                      <div className="text-xs text-gray-400">100 Token + <span className="text-purple-400 font-bold">30 Bonus</span></div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-white">Rp100.000</div>
-                    <div className="text-[10px] text-purple-400">Maximum Power</div>
-                  </div>
-                </button>
-              </div>
-
-              <p className="mt-6 text-center text-xs text-gray-500">
-                Secure payment powered by Midtrans. Token langsung masuk otomatis.
-              </p>
             </div>
           </div>
         </div>

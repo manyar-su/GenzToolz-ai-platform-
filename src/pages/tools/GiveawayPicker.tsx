@@ -24,7 +24,7 @@ export default function GiveawayPicker() {
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const response = await fetch('/api/tools/giveaway-picker', {
+      const response = await authorizedFetch('/api/tools/giveaway-picker', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ participants, rules }),
