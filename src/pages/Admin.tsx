@@ -1,16 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useUserStore } from '@/store/useUserStore';
-import { Lock, UserCheck, PlusCircle, LogOut } from 'lucide-react';
+import { useTokenStore } from '@/store/useTokenStore';
+import { Lock, UserCheck, PlusCircle, LogOut, Coins } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Admin() {
   const { adminLogin, isLoggedIn, logout } = useUserStore();
+  const { tokens, fetchBalance } = useTokenStore();
   const navigate = useNavigate();
   
   // Use local state for admin check because isLoggedIn might be true for Guest
   // But useUserStore stores 'name' as 'Admin' when logged in as admin.
   // We can rely on that or a specific role if we added one.
   const isAdmin = useUserStore(state => state.name === 'Admin');
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchBalance();
+    }
+  }, [isAdmin]);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -122,13 +130,19 @@ export default function Admin() {
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-        <button 
-          onClick={() => { logout(); navigate('/'); }}
-          className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          Logout
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium dark:bg-yellow-900 dark:text-yellow-100">
+            <Coins className="w-4 h-4" />
+            <span>{tokens} Tokens</span>
+          </div>
+          <button 
+            onClick={() => { logout(); navigate('/'); }}
+            className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">

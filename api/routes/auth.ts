@@ -46,6 +46,11 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     const randomCode = Math.floor(10000 + Math.random() * 90000);
     const userCode = `genz-${randomCode}`;
 
+    // Determine Initial Tokens
+    const adminEmail = process.env.VITE_ADMIN_EMAIL || process.env.ADMIN_EMAIL;
+    const adminTokens = parseInt(process.env.VITE_ADMIN_TOKENS || process.env.ADMIN_TOKENS || '10000');
+    const initialTokens = email === adminEmail ? adminTokens : 10;
+
     // 3. Create Profile Entry
     // Note: We use the UUID from authData.user.id as the primary key
     // but store userCode for display/referral
@@ -57,7 +62,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
             full_name: full_name,
             user_code: userCode,
             referral_code: userCode, // Same as user_code for simplicity
-            balance_tokens: 10, // Bonus 10 Token
+            balance_tokens: initialTokens, 
             referred_by: ref_code ? (await getReferrerId(ref_code)) : null
         }]);
     
@@ -75,7 +80,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
         user: {
             ...authData.user,
             user_code: userCode,
-            balance_tokens: 10
+            balance_tokens: initialTokens
         },
         session: authData.session,
       },

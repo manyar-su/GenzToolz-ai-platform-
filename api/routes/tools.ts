@@ -369,7 +369,7 @@ router.post('/script-architect', requireAuth, ensureBalance, async (req: Request
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id) // Deduct even on fallback if user considers it "success"? No, fallback is usually free or partial. User said "sukses pakai". Fallback is partial success. I'll deduct.
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({ success: true, data: 'Hook kuat, intro singkat, isi inti padat, CTA jelas.', model: modelName, fallback: true })
       return
     }
@@ -414,7 +414,7 @@ router.post('/trend-analyzer', requireAuth, ensureBalance, async (req: Request, 
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify([
@@ -469,7 +469,7 @@ router.post('/caption-generator', requireAuth, ensureBalance, async (req: Reques
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify([
@@ -523,7 +523,7 @@ router.post('/video-to-short', requireAuth, ensureBalance, async (req: Request, 
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({ success: true, data: 'Hook 0-3s\nPoin 1\nPoin 2\nPoin 3\nCTA', model: modelName, fallback: true })
       return
     }
@@ -567,7 +567,7 @@ router.post('/viral-hook-generator', requireAuth, ensureBalance, async (req: Req
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify([
@@ -622,7 +622,7 @@ router.post('/youtube-seo', requireAuth, ensureBalance, async (req: Request, res
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify({
@@ -675,7 +675,7 @@ router.post('/comment-reply', requireAuth, ensureBalance, async (req: Request, r
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify([
@@ -725,7 +725,7 @@ router.post('/color-palette', requireAuth, ensureBalance, async (req: Request, r
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify([
@@ -771,7 +771,7 @@ router.post('/scheduler-suggestion', requireAuth, ensureBalance, async (req: Req
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify({
@@ -882,7 +882,7 @@ router.post('/competitor-analyzer', requireAuth, ensureBalance, async (req: Requ
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify({
@@ -935,7 +935,7 @@ router.post('/subtitle-generator', requireAuth, ensureBalance, async (req: Reque
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify([
@@ -980,7 +980,7 @@ router.post('/brand-pitch', requireAuth, ensureBalance, async (req: Request, res
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify({
@@ -1027,7 +1027,7 @@ router.post('/affiliate-hunter', requireAuth, ensureBalance, async (req: Request
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify([
@@ -1078,7 +1078,7 @@ router.post('/reply-master', requireAuth, ensureBalance, async (req: Request, re
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify([
@@ -1153,7 +1153,7 @@ router.post('/giveaway-picker', requireAuth, ensureBalance, async (req: Request,
  * 19. Community Poll Idea Generator
  * Cost: 1 Token (AI Writing)
  */
-router.post('/poll-generator', async (req: Request, res: Response): Promise<void> => {
+router.post('/poll-generator', requireAuth, ensureBalance, async (req: Request, res: Response): Promise<void> => {
   const { niche } = req.body
 
   const modelName = models.writing
@@ -1178,7 +1178,7 @@ router.post('/poll-generator', async (req: Request, res: Response): Promise<void
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify([
@@ -1224,7 +1224,7 @@ router.post('/shadowban-checker', requireAuth, ensureBalance, async (req: Reques
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify({
@@ -1278,7 +1278,7 @@ router.post('/bio-optimizer', requireAuth, ensureBalance, async (req: Request, r
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify([
@@ -1326,7 +1326,7 @@ router.post('/thumbnail-tester', requireAuth, ensureBalance, async (req: Request
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify({
@@ -1378,7 +1378,7 @@ router.post('/color-grading', requireAuth, ensureBalance, async (req: Request, r
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      await deductToken((req as AuthRequest).user!.id)
+      // await deductToken((req as AuthRequest).user!.id)
       res.status(200).json({
         success: true,
         data: JSON.stringify({
@@ -1576,6 +1576,86 @@ router.get('/qris/topup/status', requireAuth, async (req: AuthRequest, res: Resp
 
     if (status === 'SUCCESS' || status === 'PAID') {
       await updateTransactionStatus(transactionId, 'success', transaction.payment_gateway_id || undefined)
+      
+      // --- START: Process Token Addition & Affiliate Bonus ---
+      const supabaseClient = getSupabaseServerClient()
+      
+      // 1. Get Transaction Details (tokens)
+      // Check both schema fields
+      const tokensToAdd = Number(transaction.tokens_received || transaction.tokens_purchased || 0)
+      const userId = transaction.user_id
+      
+      if (userId && tokensToAdd > 0) {
+          // 2. Add Tokens to User
+          // We use RPC if available or direct update. 
+          // Direct update is risky for concurrency, but for now let's do direct update with read-modify-write or simple increment if possible.
+          // Better to use the admin_topup_with_bonus RPC logic? 
+          // But that RPC assumes we pass amount and it calculates everything.
+          // Here we already have the transaction.
+          
+          // Let's do it manually step-by-step
+          
+          // A. Get User Profile to find Referrer
+          const { data: userProfile } = await supabaseClient
+              .from('profiles')
+              .select('balance_tokens, referred_by')
+              .eq('id', userId)
+              .single()
+          
+          if (userProfile) {
+              // B. Update User Balance
+              const newBalance = (userProfile.balance_tokens || 0) + tokensToAdd
+              await supabaseClient
+                  .from('profiles')
+                  .update({ balance_tokens: newBalance })
+                  .eq('id', userId)
+              
+              // C. Affiliate Bonus (20%)
+              if (userProfile.referred_by) {
+                  const bonusAmount = Math.floor(tokensToAdd * 0.20)
+                  
+                  if (bonusAmount > 0) {
+                      // Get Referrer Profile
+                      const { data: referrerProfile } = await supabaseClient
+                          .from('profiles')
+                          .select('balance_tokens')
+                          .eq('id', userProfile.referred_by)
+                          .single()
+                          
+                      if (referrerProfile) {
+                          // Update Referrer Balance
+                          await supabaseClient
+                              .from('profiles')
+                              .update({ balance_tokens: (referrerProfile.balance_tokens || 0) + bonusAmount })
+                              .eq('id', userProfile.referred_by)
+                          
+                          // Log Affiliate Bonus
+                          await supabaseClient
+                              .from('affiliate_logs')
+                              .insert([{
+                                  referrer_id: userProfile.referred_by,
+                                  new_user_id: userId,
+                                  bonus_amount: bonusAmount
+                              }])
+
+                          // Optional: Create Transaction Record for Bonus
+                          await supabaseClient
+                              .from('transactions')
+                              .insert([{
+                                  user_id: userProfile.referred_by,
+                                  tokens_added: bonusAmount, // tokens_added in schema
+                                  tokens_received: bonusAmount, // for consistency
+                                  amount: 0,
+                                  type: 'BONUS',
+                                  status: 'COMPLETED'
+                              }])
+                      }
+                  }
+              }
+          }
+      }
+      // --- END: Process Token Addition & Affiliate Bonus ---
+
     } else if (status === 'FAILED' || status === 'FAIL' || status === 'EXPIRED') {
       await updateTransactionStatus(transactionId, 'failed', transaction.payment_gateway_id || undefined)
     }

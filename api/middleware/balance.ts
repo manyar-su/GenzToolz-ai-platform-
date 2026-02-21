@@ -47,6 +47,11 @@ export const deductToken = async (userId: string, amount: number = 1): Promise<b
     return true
   }
 
+  // Admin Bypass (No deduction)
+  if (userId === 'admin_user') {
+      return true;
+  }
+
   try {
     const { error } = await supabase.rpc('deduct_user_balance', {
       user_id: userId,

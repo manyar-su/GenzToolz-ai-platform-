@@ -20,6 +20,7 @@ interface TokenState {
   deductToken: (amount?: number) => Promise<boolean>;
   addToken: (amount: number) => Promise<void>; // Only for simulated Top-up in this context
   transferToken: (receiverCode: string, amount: number, message: string) => Promise<{ success: boolean; message: string }>;
+  reset: () => void;
 }
 
 export const useTokenStore = create<TokenState>((set, get) => ({
@@ -27,15 +28,32 @@ export const useTokenStore = create<TokenState>((set, get) => ({
   transactions: [],
   loading: false,
 
+  reset: () => set({ tokens: 0, transactions: [] }),
+
   fetchBalance: async () => {
     // Mock for local dev without Supabase
     if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
-        set({ tokens: 1000 }); // Infinite tokens for dev
+        set({ tokens: 10 }); // 10 tokens for dev guest
         return;
     }
 
     const userId = useUserStore.getState().id;
     if (!userId) return;
+
+    // Check if current user is Admin and sync tokens from Env
+    // This allows "editing tokens when run out" by changing .env and reloading
+    const userEmail = useUserStore.getState().email;
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+    
+    if (userEmail && userEmail === adminEmail) {
+        const adminTokens = parseInt(import.meta.env.VITE_ADMIN_TOKENS || '10000');
+        // We only update if local state is different to avoid loop, 
+        // but to support "refill", we should check DB value or just force update.
+        // Let's force update the DB to match Env
+        await supabase.from('profiles').update({ balance_tokens: adminTokens }).eq('id', userId);
+        set({ tokens: adminTokens });
+        return;
+    }
 
     const { data, error } = await supabase
         .from('profiles')
@@ -56,7 +74,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     if (!userId || currentTokens < amount) return false;
 
     // Optimistic Update (Server handles actual DB deduction via RPC)
-    set({ tokens: currentTokens - amount });
+    // set({ tokens: currentTokens - amount }); // Disabled to prevent deduction on failure
     
     // We rely on the server response to confirm the transaction.
     // If the server returns 402, the UI handles it.

@@ -1,6 +1,8 @@
 
 import { Menu, Moon, Sun, Coins } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
+import { useTokenStore } from '../store/useTokenStore';
+import { useUserStore } from '../store/useUserStore';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -8,6 +10,8 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const { isDark, toggleTheme } = useTheme();
+  const { tokens } = useTokenStore();
+  const { isLoggedIn } = useUserStore();
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white/80 px-4 backdrop-blur-md dark:border-gray-700 dark:bg-gray-800/80 lg:px-8">
@@ -25,12 +29,14 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
       <div className="flex items-center gap-4">
         {/* Token Visualizer */}
-        <div className="hidden items-center rounded-full bg-yellow-50 px-4 py-1.5 ring-1 ring-yellow-200 dark:bg-yellow-900/20 dark:ring-yellow-700/50 sm:flex">
-          <Coins className="mr-2 h-4 w-4 text-yellow-600 dark:text-yellow-500" />
-          <span className="text-sm font-bold text-yellow-700 dark:text-yellow-500">
-            Sisa Token: 45 🪙
-          </span>
-        </div>
+        {isLoggedIn && (
+          <div className="hidden items-center rounded-full bg-yellow-50 px-4 py-1.5 ring-1 ring-yellow-200 dark:bg-yellow-900/20 dark:ring-yellow-700/50 sm:flex">
+            <Coins className="mr-2 h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+            <span className="text-sm font-bold text-yellow-700 dark:text-yellow-500">
+              Sisa Token: {tokens} 🪙
+            </span>
+          </div>
+        )}
 
         {/* Dark Mode Toggle */}
         <button
@@ -42,9 +48,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
         </button>
 
         {/* Mobile Token (Icon Only) */}
-        <div className="flex sm:hidden items-center rounded-full bg-yellow-50 p-2 ring-1 ring-yellow-200 dark:bg-yellow-900/20 dark:ring-yellow-700/50">
-           <span className="text-xs font-bold text-yellow-700 dark:text-yellow-500">45 🪙</span>
-        </div>
+        {isLoggedIn && (
+          <div className="flex sm:hidden items-center rounded-full bg-yellow-50 p-2 ring-1 ring-yellow-200 dark:bg-yellow-900/20 dark:ring-yellow-700/50">
+            <span className="text-xs font-bold text-yellow-700 dark:text-yellow-500">{tokens} 🪙</span>
+          </div>
+        )}
         
         {/* User Profile Placeholder */}
         <div className="h-8 w-8 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">

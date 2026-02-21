@@ -13,15 +13,18 @@ export default function Profile() {
   const [searchParams] = useSearchParams();
   const { 
     isLoggedIn, name, avatar, email, referralCode, affiliateStats,
-    logout, updateName, generateRandomAvatar, loginOrRegister 
+    logout, updateName, generateRandomAvatar, login, register 
   } = useUserStore();
   const { tokens, transferToken, fetchBalance } = useTokenStore();
   const { showAlert, showConfirm } = useAlert();
   const { theme, toggleTheme } = useTheme();
   
   // Auth State
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [authName, setAuthName] = useState('');
+  const [authRefCode, setAuthRefCode] = useState('');
   const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -66,33 +69,48 @@ export default function Profile() {
     }
   }, [searchParams, isLoggedIn]);
 
-  const handleLoginRegister = async (e: React.FormEvent) => {
+  // Fetch Balance on Login
+  useEffect(() => {
+    if (isLoggedIn) {
+        fetchBalance();
+    }
+  }, [isLoggedIn, fetchBalance]);
+
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    if (!authName.trim()) {
-        setError('Nama harus diisi');
+    if (!authEmail.trim() || !authPassword.trim()) {
+        setError('Email dan Password harus diisi');
         setLoading(false);
         return;
     }
 
-    const refCode = searchParams.get('ref') || localStorage.getItem('genz_ref_code');
-    const result = await loginOrRegister(authEmail, authName, refCode);
+    let result;
+    if (authMode === 'login') {
+        result = await login(authEmail, authPassword);
+    } else {
+        if (!authName.trim()) {
+            setError('Nama harus diisi untuk pendaftaran');
+            setLoading(false);
+            return;
+        }
+        const refCode = authRefCode.trim() || searchParams.get('ref') || localStorage.getItem('genz_ref_code');
+        result = await register(authEmail, authPassword, authName, refCode);
+    }
     
     if (result.success) {
-        // Login Success & Profile Created/Loaded
-        showAlert('Berhasil Masuk!', 'success');
+        showAlert(`Berhasil ${authMode === 'login' ? 'Masuk' : 'Daftar'}!`, 'success');
         
-        // Anti-Spam Check: Only 1 bonus per device
         const hasBonus = localStorage.getItem('genz_device_bonus');
-        if (!hasBonus) {
+        if (!hasBonus && authMode === 'register') {
             localStorage.setItem('genz_device_bonus', 'true');
             setWelcomeMessage(true);
             setTimeout(() => setWelcomeMessage(false), 5000); 
         }
     } else {
-        setError(result.error || 'Gagal login/daftar. Cek koneksi atau email.');
+        setError(result.error || 'Gagal. Pastikan data benar.');
     }
     setLoading(false);
   };
@@ -226,22 +244,100 @@ export default function Profile() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 dark:bg-gray-900 transition-colors duration-200">
             <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl dark:bg-gray-800 transition-colors duration-200">
-                <div className="text-center mb-8">
+                <div className="text-center mb-6">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
                         <User className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        Profil GenzTools
+                        {authMode === 'login' ? 'Masuk ke Akun' : 'Daftar Akun Baru'}
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400">
-                        Silakan login untuk melihat profil Anda.
+                        {authMode === 'login' ? 'Silakan login untuk melanjutkan' : 'Daftar untuk akses fitur creator'}
                     </p>
                 </div>
                 
-                <button 
-                    onClick={() => navigate('/login')} 
-                    className="w-full flex items-center justify-center rounded-lg bg-blue-600 py-3 font-bold text-white transition hover:bg-blue-700"
-                >Login Sekarang</button>
+                {/* Tabs */}
+                <div className="flex rounded-lg bg-gray-100 p-1 mb-6 dark:bg-gray-700">
+                    <button
+                        onClick={() => setAuthMode('login')}
+                        className={`flex-1 rounded-md py-2 text-sm font-medium transition-all ${
+                            authMode === 'login' 
+                            ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-white' 
+                            : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                        }`}
+                    >
+                        Masuk
+                    </button>
+                    <button
+                        onClick={() => setAuthMode('register')}
+                        className={`flex-1 rounded-md py-2 text-sm font-medium transition-all ${
+                            authMode === 'register' 
+                            ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-white' 
+                            : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                        }`}
+                    >
+                        Daftar
+                    </button>
+                </div>
+
+                <form onSubmit={handleAuth} className="space-y-4">
+                    {authMode === 'register' && (
+                        <>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Lengkap</label>
+                                <input
+                                    type="text"
+                                    value={authName}
+                                    onChange={(e) => setAuthName(e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    placeholder="Nama Lengkap"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ID Affiliator (Opsional)</label>
+                                <input
+                                    type="text"
+                                    value={authRefCode}
+                                    onChange={(e) => setAuthRefCode(e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    placeholder="Contoh: genz-12345"
+                                />
+                            </div>
+                        </>
+                    )}
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <input
+                            type="email"
+                            value={authEmail}
+                            onChange={(e) => setAuthEmail(e.target.value)}
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            placeholder="email@contoh.com"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                        <input
+                            type="password"
+                            value={authPassword}
+                            onChange={(e) => setAuthPassword(e.target.value)}
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            placeholder="******"
+                        />
+                    </div>
+
+                    {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+
+                    <button 
+                        type="submit"
+                        disabled={loading}
+                        className="w-full flex items-center justify-center rounded-lg bg-blue-600 py-3 font-bold text-white transition hover:bg-blue-700 disabled:opacity-70"
+                    >
+                        {loading ? <Loader2 className="animate-spin h-5 w-5" /> : (authMode === 'login' ? 'Masuk' : 'Daftar Sekarang')}
+                    </button>
+                </form>
                 
                 <button onClick={() => navigate('/')} className="mt-4 w-full text-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
                     Kembali ke Dashboard
@@ -713,4 +809,16 @@ export default function Profile() {
       )}
     </div>
   );
+}
+
+const updateTransactionStatus = async (transactionId: string, status: 'success' | 'failed', paymentGatewayId?: string) => {
+  const supabaseClient = getSupabaseServerClient()
+  const updatePayload: Record<string, any> = { status }
+  const primary = await supabaseClient
+    .from('transactions')
+    .update(updatePayload)
+    .eq('id', transactionId)
+    .select('id')
+    .single()
+  // ...
 }

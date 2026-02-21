@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { useTokenStore } from './useTokenStore';
 
 interface AffiliateStats {
   friendsJoined: number;
@@ -18,6 +19,8 @@ interface UserState {
   
   // Actions
   initializeGuest: () => Promise<void>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string, name: string, refCode?: string | null) => Promise<{ success: boolean; error?: string }>;
   adminLogin: (username: string, password: string) => Promise<boolean>;
   sendOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
   verifyOtp: (email: string, code: string, name: string, refCode?: string | null) => Promise<{ success: boolean; error?: string }>;
@@ -66,6 +69,63 @@ export const useUserStore = create<UserState>((set, get) => ({
               get().syncProfile();
           }
       }
+  },
+
+  login: async (email, password) => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        set({
+            isLoggedIn: true,
+            id: data.data.user.id,
+            name: data.data.user.full_name || 'User',
+            avatar: data.data.user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.data.user.full_name}`,
+            email: data.data.user.email,
+            referralCode: data.data.user.user_code || data.data.user.referral_code,
+            referredBy: data.data.user.referred_by,
+        });
+        // Sync additional stats
+        get().syncProfile();
+        return { success: true };
+      }
+      return { success: false, error: data.error };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  },
+
+  register: async (email, password, name, refCode = null) => {
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, full_name: name, ref_code: refCode })
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        set({
+            isLoggedIn: true,
+            id: data.data.user.id,
+            name: data.data.user.user_metadata?.full_name || name,
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
+            email: data.data.user.email,
+            referralCode: data.data.user.user_code,
+            referredBy: refCode || null,
+        });
+        get().syncProfile();
+        return { success: true };
+      }
+      return { success: false, error: data.error };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
   },
 
   adminLogin: async (username, password) => {
@@ -242,6 +302,14 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   logout: async () => {
     await supabase.auth.signOut();
+    useTokenStore.getState().reset();
+    set({
+        isLoggedIn: false,
+        name: 'Guest User',
+        email: '',
+        referralCode: '',
+        referredBy: null
+    });
     set({
         isLoggedIn: false,
         name: 'Guest User',
