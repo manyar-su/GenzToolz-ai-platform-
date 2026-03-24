@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, Gift, Copy, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useUserStore } from '../store/useUserStore';
+import { useTokenStore } from '../store/useTokenStore';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -18,6 +19,7 @@ export default function Register() {
 
   const navigate = useNavigate();
   const { syncProfile } = useUserStore();
+  const { fetchBalance } = useTokenStore();
 
   const translateError = (msg: string) => {
     if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('sudah terdaftar')) return 'Email sudah terdaftar. Silakan login.';
@@ -55,6 +57,21 @@ export default function Register() {
         await supabase.auth.setSession(data.data.session);
         await syncProfile();
       }
+
+      // Update user store state agar fetchBalance tahu siapa usernya
+      const { set: setUser } = useUserStore.getState() as any;
+      useUserStore.setState({
+        isLoggedIn: true,
+        id: data.data?.user?.id || '',
+        name: data.data?.user?.user_metadata?.full_name || name,
+        email: data.data?.user?.email || email,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
+        referralCode: data.data?.user?.user_code || data.data?.user?.referral_code || '',
+        referredBy: null,
+      });
+
+      // Fetch balance agar token langsung tampil
+      await fetchBalance();
 
       setSuccessData({
         referralCode: data.data?.user?.user_code || data.data?.user?.referral_code || '-',

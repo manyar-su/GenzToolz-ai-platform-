@@ -7,12 +7,13 @@ import { requireAuth, type AuthRequest } from '../middleware/auth.js'
 import { ensureBalance, deductToken } from '../middleware/balance.js'
 
 const router = Router()
+const DEFAULT_MODEL = 'meta-llama/llama-3.3-70b-instruct:free'
 const models = {
-  writing: process.env.VITE_OPENROUTER_MODEL_SCRIPT || 'openai/gpt-4o-mini',
-  analyzer: process.env.VITE_OPENROUTER_MODEL_SEARCH || 'anthropic/claude-3.5-haiku',
-  utility: process.env.VITE_OPENROUTER_MODEL_SCRIPT || 'openai/gpt-4o-mini',
-  visual: process.env.VITE_OPENROUTER_MODEL_IMAGE || 'openai/gpt-4o-mini',
-  clipper: process.env.VITE_OPENROUTER_MODEL_CLIPPER || 'meta-llama/llama-3.2-3b-instruct'
+  writing: DEFAULT_MODEL,
+  analyzer: DEFAULT_MODEL,
+  utility: DEFAULT_MODEL,
+  visual: DEFAULT_MODEL,
+  clipper: DEFAULT_MODEL
 }
 const isQuotaError = (error: any) => {
   const message = typeof error?.message === 'string' ? error.message : ''

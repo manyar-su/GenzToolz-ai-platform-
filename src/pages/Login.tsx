@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useUserStore } from '@/store/useUserStore';
+import { useTokenStore } from '@/store/useTokenStore';
 import { Mail, Lock, Eye, EyeOff, Gift } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -13,7 +14,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { syncProfile } = useUserStore(); // Assume we might need this or direct supabase
+  const { syncProfile } = useUserStore();
+  const { fetchBalance } = useTokenStore();
 
   useEffect(() => {
     // Check if redirected from register
@@ -37,28 +39,58 @@ export default function Login() {
     };
 
     try {
-      const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
+      let userData: any = null;
+      let sessionData: any = null;
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+            signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(translateLoginError(data.error || 'Login gagal'));
+        }
+        userData = data.data.user;
+        sessionData = data.data.session;
+      } catch (backendErr: any) {
+        // Jika backend timeout/unreachable, fallback ke Supabase client langsung
+        if (backendErr.name === 'AbortError' || backendErr.message?.includes('fetch') || backendErr.message?.includes('network')) {
+          console.warn('Backend unreachable, fallback to Supabase client');
+          const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+          if (loginError) throw new Error(translateLoginError(loginError.message));
+          const { data: profile } = await supabase.from('profiles').select('*').eq('id', loginData.user.id).single();
+          userData = { ...loginData.user, ...profile };
+          sessionData = loginData.session;
+        } else {
+          throw backendErr;
+        }
+      }
+
+      // Set Supabase session
+      if (sessionData) {
+        await supabase.auth.setSession(sessionData);
+      }
+
+      // Update user store
+      useUserStore.setState({
+        isLoggedIn: true,
+        id: userData.id,
+        name: userData.full_name || userData.user_metadata?.full_name || 'User',
+        avatar: userData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.email}`,
+        email: userData.email || email,
+        referralCode: userData.user_code || userData.referral_code || '',
+        referredBy: userData.referred_by || null,
       });
 
-      const data = await response.json();
-
-      if (!data.success) {
-          throw new Error(translateLoginError(data.error || 'Login gagal'));
-      }
-      
-      // Update Supabase Client Session
-      if (data.data?.session) {
-          const { error: sessError } = await supabase.auth.setSession(data.data.session);
-          if (sessError) throw sessError;
-          
-          // Also update local store with user details immediately if needed
-          // Or let the layout/store listener handle it. 
-          // For now, let's force a reload or store update if possible.
-          // But navigate is enough, the store should pick up session on mount.
-      }
+      // Fetch token balance
+      await fetchBalance();
 
       navigate('/');
     } catch (err: any) {

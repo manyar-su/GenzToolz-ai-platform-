@@ -62,11 +62,12 @@ export const useUserStore = create<UserState>((set, get) => ({
                   name: profile.full_name,
                   avatar: profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.full_name}`,
                   email: profile.email,
-                  referralCode: profile.user_code || profile.referral_code, // Use user_code if available
+                  referralCode: profile.user_code || profile.referral_code,
                   referredBy: profile.referred_by,
               });
               // Sync additional stats
               get().syncProfile();
+              useTokenStore.getState().fetchBalance();
           }
       }
   },
@@ -165,6 +166,7 @@ export const useUserStore = create<UserState>((set, get) => ({
             referredBy: refCode || null,
         });
         get().syncProfile();
+        useTokenStore.getState().fetchBalance();
         return { success: true };
       }
       return { success: false, error: data.error };

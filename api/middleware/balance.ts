@@ -16,11 +16,11 @@ export const ensureBalance = async (req: AuthRequest, res: Response, next: NextF
     return
   }
 
-  // Admin Bypass (Unlimited Balance)
-  if (req.user.id === 'admin_user') {
-    next()
-    return
-  }
+  // Admin Bypass (Unlimited Balance) - disabled, admin uses real balance
+  // if (req.user.id === 'admin_user') {
+  //   next()
+  //   return
+  // }
 
   try {
     const { data, error } = await supabaseAdmin
@@ -54,10 +54,10 @@ export const deductToken = async (userId: string, amount: number = 1): Promise<b
     return true
   }
 
-  // Admin Bypass (No deduction)
-  if (userId === 'admin_user') {
-      return true;
-  }
+  // Admin Bypass (No deduction) - disabled
+  // if (userId === 'admin_user') {
+  //   return true;
+  // }
 
   try {
     // 1. Try RPC first (Atomic)
