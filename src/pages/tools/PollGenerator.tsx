@@ -6,7 +6,7 @@ import { useTokenStore } from '../../store/useTokenStore';
 
 export default function PollGenerator() {
   const navigate = useNavigate();
-  const { deductToken } = useTokenStore();
+  const { deductToken, fetchBalance } = useTokenStore();
   const [niche, setNiche] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<{question: string, options: string[]}[]>([]);
@@ -14,7 +14,7 @@ export default function PollGenerator() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!deductToken(1)) {
+    if (!await deductToken(1)) {
         alert('Token tidak cukup! Silakan top-up.');
         return;
     }
@@ -35,6 +35,7 @@ export default function PollGenerator() {
       
       const data = await response.json();
       if (data.success) {
+        fetchBalance(); // Sync balance
         let cleanJson = data.data.replace(/```json\n?|\n?```/g, '').trim();
         try {
           const parsed = JSON.parse(cleanJson);

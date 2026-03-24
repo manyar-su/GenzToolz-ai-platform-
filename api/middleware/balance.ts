@@ -3,6 +3,33 @@ import { type Response, type NextFunction } from 'express'
 import { supabase, supabaseAdmin } from '../lib/supabase.js' // Fix import path extension if needed
 import { type AuthRequest } from './auth.js'
 
+// Token cost per tool — sinkron dengan TOKEN_COST di tools.ts
+const TOOL_COSTS: Record<string, number> = {
+  'script-architect': 1,
+  'trend-analyzer': 1,
+  'caption-generator': 1,
+  'video-to-short': 1,
+  'viral-hook-generator': 1,
+  'youtube-seo': 1,
+  'comment-reply': 1,
+  'color-palette': 1,
+  'scheduler-suggestion': 1,
+  'podcast-to-shorts': 2,
+  'competitor-analyzer': 1,
+  'subtitle-generator': 3,
+  'brand-pitch': 1,
+  'affiliate-hunter': 1,
+  'reply-master': 1,
+  'giveaway-picker': 1,
+  'poll-generator': 1,
+  'shadowban-checker': 1,
+  'bio-optimizer': 1,
+  'thumbnail-tester': 1,
+  'color-grading': 1,
+  'smart-clipper': 5,
+  'text-to-visual': 1,
+}
+
 // Middleware: Cek saldo tanpa potong (Logic Gate)
 export const ensureBalance = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   if (!req.user || !req.user.id) {
@@ -15,12 +42,6 @@ export const ensureBalance = async (req: AuthRequest, res: Response, next: NextF
     next()
     return
   }
-
-  // Admin Bypass (Unlimited Balance) - disabled, admin uses real balance
-  // if (req.user.id === 'admin_user') {
-  //   next()
-  //   return
-  // }
 
   try {
     const { data, error } = await supabaseAdmin
@@ -35,8 +56,13 @@ export const ensureBalance = async (req: AuthRequest, res: Response, next: NextF
       return
     }
 
-    if (data.balance_tokens <= 0) {
-       res.status(402).json({ success: false, error: 'Saldo Habis. Silakan Top Up!' })
+    // Deteksi cost dari URL path
+    const pathParts = req.path.split('/')
+    const toolSlug = pathParts.find(p => TOOL_COSTS[p]) || ''
+    const required = TOOL_COSTS[toolSlug] ?? (req as any).tokenCost ?? 1
+
+    if (data.balance_tokens < required) {
+       res.status(402).json({ success: false, error: `Saldo tidak cukup. Dibutuhkan ${required} token, saldo Anda ${data.balance_tokens}. Silakan Top Up!` })
        return
     }
 
@@ -54,11 +80,6 @@ export const deductToken = async (userId: string, amount: number = 1): Promise<b
     return true
   }
 
-  // Admin Bypass (No deduction) - disabled
-  // if (userId === 'admin_user') {
-  //   return true;
-  // }
-
   try {
     // 1. Try RPC first (Atomic)
     const { error } = await supabaseAdmin.rpc('deduct_user_balance', {
@@ -71,7 +92,6 @@ export const deductToken = async (userId: string, amount: number = 1): Promise<b
     console.warn('RPC deduct_user_balance failed, attempting manual fallback...', error.message)
     
     // 2. Fallback: Manual Transaction (Get -> Update)
-    // Note: Not atomic, but ensures functionality if RPC is missing
     const { data: user, error: fetchError } = await supabaseAdmin
         .from('profiles')
         .select('balance_tokens')
@@ -84,7 +104,7 @@ export const deductToken = async (userId: string, amount: number = 1): Promise<b
     }
     
     const newBalance = user.balance_tokens - amount
-    if (newBalance < 0) return false // Should be caught by ensureBalance, but double check
+    if (newBalance < 0) return false
 
     const { error: updateError } = await supabaseAdmin
         .from('profiles')
@@ -102,4 +122,3 @@ export const deductToken = async (userId: string, amount: number = 1): Promise<b
     return false
   }
 }
-

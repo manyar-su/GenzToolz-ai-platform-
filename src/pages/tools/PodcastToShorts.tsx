@@ -14,8 +14,8 @@ export default function PodcastToShorts() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!deductToken(1)) {
-        alert('Token tidak cukup! Silakan top-up.');
+    if (!await deductToken(2)) {
+        alert('Token tidak cukup! Butuh 2 Token untuk Podcast to Shorts.');
         return;
     }
     setLoading(true);
@@ -94,7 +94,7 @@ export default function PodcastToShorts() {
                   <strong>Cara Penggunaan:</strong> Tempel transkrip podcast atau rekaman audio Anda. 
                   AI akan mencari 5 momen terbaik yang viral-worthy untuk dijadikan Shorts/Reels.
                   <br/>
-                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 1 Token per generate.</span>
+                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-100">Biaya: 2 Token per generate.</span>
                 </p>
               </div>
             </div>

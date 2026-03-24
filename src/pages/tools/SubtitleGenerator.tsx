@@ -58,7 +58,7 @@ export default function SubtitleGenerator() {
     e.preventDefault();
     if (!file) return;
 
-    if (!deductToken(3)) {
+    if (!await deductToken(3)) {
       alert('Token tidak cukup! Butuh 3 Token.');
       return;
     }

@@ -7,7 +7,8 @@ import { requireAuth, type AuthRequest } from '../middleware/auth.js'
 import { ensureBalance, deductToken } from '../middleware/balance.js'
 
 const router = Router()
-const DEFAULT_MODEL = 'meta-llama/llama-3.3-70b-instruct:free'
+// Model berbayar — stabil, tidak kena rate limit free tier
+const DEFAULT_MODEL = 'meta-llama/llama-3.3-70b-instruct'
 const models = {
   writing: DEFAULT_MODEL,
   analyzer: DEFAULT_MODEL,
@@ -15,18 +16,42 @@ const models = {
   visual: DEFAULT_MODEL,
   clipper: DEFAULT_MODEL
 }
+
+// Token cost per tool — harus sinkron dengan frontend
+const TOKEN_COST: Record<string, number> = {
+  'script-architect': 1,
+  'trend-analyzer': 1,
+  'caption-generator': 1,
+  'video-to-short': 1,
+  'viral-hook-generator': 1,
+  'youtube-seo': 1,
+  'comment-reply': 1,
+  'color-palette': 1,
+  'scheduler-suggestion': 1,
+  'podcast-to-shorts': 2,
+  'competitor-analyzer': 1,
+  'subtitle-generator': 3,
+  'brand-pitch': 1,
+  'affiliate-hunter': 1,
+  'reply-master': 1,
+  'giveaway-picker': 1,
+  'poll-generator': 1,
+  'shadowban-checker': 1,
+  'bio-optimizer': 1,
+  'thumbnail-tester': 1,
+  'color-grading': 1,
+  'smart-clipper': 5,
+  'text-to-visual': 1,
+}
+// Hanya tangkap rate limit / server overload — bukan error lain
 const isQuotaError = (error: any) => {
   const message = typeof error?.message === 'string' ? error.message : ''
-  const lower = message.toLowerCase()
   return (
     message.includes('429') ||
     message.includes('503') ||
-    lower.includes('quota') ||
-    lower.includes('rate limit') ||
-    lower.includes('overloaded') ||
-    lower.includes('too many requests') ||
-    lower.includes('context length') ||
-    lower.includes('model_not_found')
+    message.toLowerCase().includes('rate limit') ||
+    message.toLowerCase().includes('too many requests') ||
+    message.toLowerCase().includes('overloaded')
   )
 }
 
@@ -378,7 +403,7 @@ router.post('/script-architect', requireAuth, ensureBalance, async (req: Request
 
     const userId = (req as AuthRequest).user?.id
     if (userId) {
-      await deductToken(userId)
+      await deductToken(userId, 1)
     }
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
@@ -423,7 +448,7 @@ router.post('/trend-analyzer', requireAuth, ensureBalance, async (req: Request, 
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -467,7 +492,7 @@ router.post('/caption-generator', requireAuth, ensureBalance, async (req: Reques
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -510,7 +535,7 @@ router.post('/video-to-short', requireAuth, ensureBalance, async (req: Request, 
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -553,7 +578,7 @@ router.post('/viral-hook-generator', requireAuth, ensureBalance, async (req: Req
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -600,7 +625,7 @@ router.post('/youtube-seo', requireAuth, ensureBalance, async (req: Request, res
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -643,7 +668,7 @@ router.post('/comment-reply', requireAuth, ensureBalance, async (req: Request, r
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -685,7 +710,7 @@ router.post('/color-palette', requireAuth, ensureBalance, async (req: Request, r
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -723,7 +748,7 @@ router.post('/scheduler-suggestion', requireAuth, ensureBalance, async (req: Req
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -773,7 +798,7 @@ router.post('/podcast-to-shorts', requireAuth, ensureBalance, async (req: Reques
 
     const userId = (req as AuthRequest).user?.id
     if (userId) {
-      await deductToken(userId)
+      await deductToken(userId, TOKEN_COST['podcast-to-shorts'])
     }
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
@@ -816,7 +841,7 @@ router.post('/competitor-analyzer', requireAuth, ensureBalance, async (req: Requ
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -860,7 +885,7 @@ router.post('/subtitle-generator', requireAuth, ensureBalance, async (req: Reque
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, TOKEN_COST['subtitle-generator'])
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -897,7 +922,7 @@ router.post('/brand-pitch', requireAuth, ensureBalance, async (req: Request, res
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -935,7 +960,7 @@ router.post('/affiliate-hunter', requireAuth, ensureBalance, async (req: Request
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -978,7 +1003,7 @@ router.post('/reply-master', requireAuth, ensureBalance, async (req: Request, re
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -1027,7 +1052,7 @@ router.post('/giveaway-picker', requireAuth, ensureBalance, async (req: Request,
 
     const userId = (req as AuthRequest).user?.id
     if (userId) {
-      await deductToken(userId)
+      await deductToken(userId, 1)
     }
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
@@ -1065,7 +1090,7 @@ router.post('/poll-generator', requireAuth, ensureBalance, async (req: Request, 
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -1103,7 +1128,7 @@ router.post('/shadowban-checker', requireAuth, ensureBalance, async (req: Reques
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -1146,7 +1171,7 @@ router.post('/bio-optimizer', requireAuth, ensureBalance, async (req: Request, r
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -1186,7 +1211,7 @@ router.post('/thumbnail-tester', requireAuth, ensureBalance, async (req: Request
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -1227,7 +1252,7 @@ router.post('/color-grading', requireAuth, ensureBalance, async (req: Request, r
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    await deductToken((req as AuthRequest).user!.id, 1)
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -1295,7 +1320,7 @@ router.post('/smart-clipper/start', requireAuth, ensureBalance, async (req: Requ
 
   const userId = (req as AuthRequest).user?.id
   if (userId) {
-    await deductToken(userId)
+    await deductToken(userId, TOKEN_COST['smart-clipper'])
   }
   res.status(200).json({ success: true, jobId, message: 'Video processing started' });
 });
@@ -1768,7 +1793,7 @@ router.post('/auto-subtitle/start', requireAuth, ensureBalance, async (req: Requ
   // Simulate Background Processing
   simulateSubtitleProcessing(jobId, removeWatermark);
 
-  await deductToken((req as AuthRequest).user!.id)
+  await deductToken((req as AuthRequest).user!.id, 1)
   res.status(200).json({ success: true, jobId, message: 'Subtitle generation started' });
 });
 

@@ -28,7 +28,7 @@ export default function WatermarkRemover() {
     if (!image) return;
     
     // Optimistic check
-    if (!deductToken(1)) {
+    if (!await deductToken(1)) {
         showConfirm(
             'Token Anda tidak mencukupi untuk menggunakan tools ini. Silakan Top-up terlebih dahulu.',
             () => navigate('/topup'),

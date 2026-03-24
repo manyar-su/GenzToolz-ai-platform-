@@ -144,8 +144,8 @@ export default function AllInOneDownloader() {
     }
   };
 
-  const handleDownload = () => {
-    if (deductToken(1)) {
+  const handleDownload = async () => {
+    if (await deductToken(1)) {
         showAlert('Download dimulai! (Simulasi)', 'success');
         
         // Create dummy download link

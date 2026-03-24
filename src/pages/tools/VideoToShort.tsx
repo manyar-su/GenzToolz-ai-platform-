@@ -17,7 +17,7 @@ export default function VideoToShort() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!deductToken(1)) {
+    if (!await deductToken(1)) {
         showAlert('Token tidak cukup! Silakan top-up.', 'warning');
         return;
     }

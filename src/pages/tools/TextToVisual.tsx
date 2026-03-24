@@ -15,7 +15,7 @@ export default function TextToVisual() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!deductToken(1)) {
+    if (!await deductToken(1)) {
         showConfirm(
             'Token Anda tidak mencukupi untuk menggunakan tools ini. Silakan Top-up terlebih dahulu.',
             () => navigate('/topup'),

@@ -30,13 +30,16 @@ export const generateOpenRouterText = async (prompt: string, model: string, retr
           "messages": [
             { "role": "user", "content": prompt }
           ],
-          "max_tokens": 2048
+          "max_tokens": 4096,
+          "temperature": 0.7
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const errMsg = errorData?.error?.message || errorData?.message || response.statusText || '';
+
+        console.error(`OpenRouter error ${response.status}:`, JSON.stringify(errorData));
 
         // Rate limit — tunggu lalu retry
         if ((response.status === 429 || response.status === 503) && attempt < retries) {

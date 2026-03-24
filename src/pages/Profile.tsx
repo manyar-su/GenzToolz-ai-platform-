@@ -43,8 +43,10 @@ export default function Profile() {
   // Avatar & Background
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const [coverBg, setCoverBg] = useState('from-blue-600 to-purple-600');
+  const [coverImage, setCoverImage] = useState<string | null>(null);
   const [showBgPicker, setShowBgPicker] = useState(false);
   const avatarUploadRef = useRef<HTMLInputElement>(null);
+  const coverUploadRef = useRef<HTMLInputElement>(null);
 
   const bgOptions = [
     { label: 'Biru-Ungu', value: 'from-blue-600 to-purple-600' },
@@ -173,7 +175,6 @@ export default function Profile() {
     if (!file) return;
     setShowAvatarMenu(false);
 
-    // Max 2MB
     if (file.size > 2 * 1024 * 1024) {
       showAlert('Ukuran file maksimal 2MB', 'error');
       return;
@@ -199,8 +200,23 @@ export default function Profile() {
     } catch (err: any) {
       showAlert('Gagal upload avatar: ' + err.message, 'error');
     }
-    // reset input
     if (avatarUploadRef.current) avatarUploadRef.current.value = '';
+  };
+
+  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      showAlert('Ukuran file cover maksimal 5MB', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setCoverImage(ev.target?.result as string);
+      setShowBgPicker(false);
+    };
+    reader.readAsDataURL(file);
+    if (coverUploadRef.current) coverUploadRef.current.value = '';
   };
 
   const handleTopup = async (amount: number, price: number, packageName: string) => {
@@ -492,7 +508,10 @@ export default function Profile() {
                 {/* Profile Card */}
                 <div className="overflow-hidden rounded-2xl bg-white shadow-lg dark:bg-gray-800 transition-colors duration-200">
                   {/* Cover Background */}
-                  <div className={`relative h-32 bg-gradient-to-r ${coverBg} md:h-40`}>
+                  <div
+                    className={`relative h-32 md:h-40 ${coverImage ? '' : `bg-gradient-to-r ${coverBg}`}`}
+                    style={coverImage ? { backgroundImage: `url(${coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+                  >
                     <button
                       onClick={() => setShowBgPicker(!showBgPicker)}
                       className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-black/30 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm hover:bg-black/50 transition"
@@ -504,18 +523,33 @@ export default function Profile() {
                     {showBgPicker && (
                       <div className="absolute bottom-12 right-3 z-20 rounded-xl bg-white p-3 shadow-xl dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                         <p className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">Pilih Warna Latar</p>
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid grid-cols-4 gap-2 mb-3">
                           {bgOptions.map(bg => (
                             <button
                               key={bg.value}
-                              onClick={() => { setCoverBg(bg.value); setShowBgPicker(false); }}
-                              className={`h-8 w-8 rounded-lg bg-gradient-to-br ${bg.value} ring-2 transition hover:scale-110 ${coverBg === bg.value ? 'ring-white' : 'ring-transparent'}`}
+                              onClick={() => { setCoverBg(bg.value); setCoverImage(null); setShowBgPicker(false); }}
+                              className={`h-8 w-8 rounded-lg bg-gradient-to-br ${bg.value} ring-2 transition hover:scale-110 ${!coverImage && coverBg === bg.value ? 'ring-white' : 'ring-transparent'}`}
                               title={bg.label}
                             />
                           ))}
                         </div>
+                        <button
+                          onClick={() => { coverUploadRef.current?.click(); setShowBgPicker(false); }}
+                          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition"
+                        >
+                          <Upload className="h-3.5 w-3.5" /> Upload Foto Cover
+                        </button>
                       </div>
                     )}
+
+                    {/* Hidden cover upload input */}
+                    <input
+                      ref={coverUploadRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleCoverUpload}
+                    />
                   </div>
 
                   <div className="px-6 pb-6 md:px-8">
@@ -524,8 +558,9 @@ export default function Profile() {
                       {/* Avatar + controls */}
                       <div className="relative flex-shrink-0">
                         <img
-                          src={avatar}
+                          src={avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`}
                           alt="Profile"
+                          onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${name || 'user'}` }}
                           className="h-24 w-24 rounded-full border-4 border-white bg-white object-cover shadow-lg dark:border-gray-800 sm:h-28 sm:w-28"
                         />
                         {/* Avatar action buttons */}
