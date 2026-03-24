@@ -18,7 +18,16 @@ const models = {
 const isQuotaError = (error: any) => {
   const message = typeof error?.message === 'string' ? error.message : ''
   const lower = message.toLowerCase()
-  return message.includes('429') || message.includes('503') || lower.includes('quota') || lower.includes('rate limit') || lower.includes('overloaded')
+  return (
+    message.includes('429') ||
+    message.includes('503') ||
+    lower.includes('quota') ||
+    lower.includes('rate limit') ||
+    lower.includes('overloaded') ||
+    lower.includes('too many requests') ||
+    lower.includes('context length') ||
+    lower.includes('model_not_found')
+  )
 }
 
 const getRapidApiKey = () => {
@@ -374,8 +383,7 @@ router.post('/script-architect', requireAuth, ensureBalance, async (req: Request
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({ success: true, data: 'Hook kuat, intro singkat, isi inti padat, CTA jelas.', model: modelName, fallback: true })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Script Architect Error:', error)
@@ -419,18 +427,7 @@ router.post('/trend-analyzer', requireAuth, ensureBalance, async (req: Request, 
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify([
-          {
-            title: 'Tren Simulasi',
-            content: 'Contoh tren dan ide konten singkat dengan hashtag relevan.'
-          }
-        ]),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Trend Analyzer Error:', error)
@@ -474,18 +471,7 @@ router.post('/caption-generator', requireAuth, ensureBalance, async (req: Reques
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify([
-          {
-            title: 'Varian Simulasi',
-            content: 'Caption ringkas + hashtag contoh #genztools #konten'
-          }
-        ]),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Caption Generator Error:', error)
@@ -528,8 +514,7 @@ router.post('/video-to-short', requireAuth, ensureBalance, async (req: Request, 
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({ success: true, data: 'Hook 0-3s\nPoin 1\nPoin 2\nPoin 3\nCTA', model: modelName, fallback: true })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Video-to-Short Error:', error)
@@ -572,15 +557,7 @@ router.post('/viral-hook-generator', requireAuth, ensureBalance, async (req: Req
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify([
-          { title: 'Curiosity', content: 'Kamu gak bakal nyangka ini terjadi...' }
-        ]),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Viral Hook Generator Error:', error)
@@ -627,17 +604,7 @@ router.post('/youtube-seo', requireAuth, ensureBalance, async (req: Request, res
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify({
-          titles: ['Judul Simulasi 1', 'Judul Simulasi 2'],
-          tags: ['tag1', 'tag2'],
-          description: 'Deskripsi SEO singkat.'
-        }),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('YouTube SEO Error:', error)
@@ -680,15 +647,7 @@ router.post('/comment-reply', requireAuth, ensureBalance, async (req: Request, r
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify([
-          { title: 'Varian 1', content: 'Balasan simulasi yang ramah.' }
-        ]),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Comment Reply Error:', error)
@@ -730,15 +689,7 @@ router.post('/color-palette', requireAuth, ensureBalance, async (req: Request, r
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify([
-          { color: '#111111', name: 'Charcoal', explanation: 'Netral dan modern.' }
-        ]),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Color Palette Error:', error)
@@ -776,22 +727,7 @@ router.post('/scheduler-suggestion', requireAuth, ensureBalance, async (req: Req
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify({
-          monday: ['09:00', '12:00', '18:00'],
-          tuesday: ['09:00', '12:00', '18:00'],
-          wednesday: ['09:00', '12:00', '18:00'],
-          thursday: ['09:00', '12:00', '18:00'],
-          friday: ['09:00', '12:00', '18:00'],
-          saturday: ['10:00', '13:00', '19:00'],
-          sunday: ['10:00', '13:00', '19:00'],
-          reasoning: 'Jam prime time umum untuk engagement.'
-        }),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Scheduler Suggestion Error:', error)
@@ -842,16 +778,7 @@ router.post('/podcast-to-shorts', requireAuth, ensureBalance, async (req: Reques
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // const userId = (req as AuthRequest).user?.id
-      // if (userId) await deductToken(userId)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify([
-          { title: 'Klip Simulasi', segment: 'Potongan menarik...', reason: 'Hook kuat.' }
-        ]),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Podcast-to-Shorts Error:', error)
@@ -893,16 +820,7 @@ router.post('/competitor-analyzer', requireAuth, ensureBalance, async (req: Requ
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify({
-          patterns: ['Pola Simulasi 1', 'Pola Simulasi 2', 'Pola Simulasi 3'],
-          strategy: ['Strategi Simulasi 1', 'Strategi Simulasi 2', 'Strategi Simulasi 3']
-        }),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Competitor Analyzer Error:', error)
@@ -946,15 +864,7 @@ router.post('/subtitle-generator', requireAuth, ensureBalance, async (req: Reque
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify([
-          { time: '00:00 - 00:03', text: 'Subtitle simulasi...', style: 'Pop-up' }
-        ]),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Subtitle Generator Error:', error)
@@ -991,16 +901,7 @@ router.post('/brand-pitch', requireAuth, ensureBalance, async (req: Request, res
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify({
-          subject: 'Pitch Simulasi',
-          body: 'Isi email pitch singkat.'
-        }),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Brand Pitch Error:', error)
@@ -1038,15 +939,7 @@ router.post('/affiliate-hunter', requireAuth, ensureBalance, async (req: Request
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify([
-          { product: 'Produk Simulasi', reason: 'Trend pasar', angle: 'Angle konten singkat' }
-        ]),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Affiliate Hunter Error:', error)
@@ -1089,15 +982,7 @@ router.post('/reply-master', requireAuth, ensureBalance, async (req: Request, re
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify([
-          { reply: 'Balasan simulasi singkat.', tone: tone }
-        ]),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Reply Master Error:', error)
@@ -1147,18 +1032,7 @@ router.post('/giveaway-picker', requireAuth, ensureBalance, async (req: Request,
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // const userId = (req as AuthRequest).user?.id
-      // if (userId) await deductToken(userId)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify({
-          winner: 'Pemenang Simulasi',
-          status: 'Verified',
-          log: 'Pemilihan simulasi.'
-        }),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Giveaway Picker Error:', error)
@@ -1195,15 +1069,7 @@ router.post('/poll-generator', requireAuth, ensureBalance, async (req: Request, 
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify([
-          { question: 'Pertanyaan simulasi?', options: ['Opsi A', 'Opsi B'] }
-        ]),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Poll Generator Error:', error)
@@ -1241,18 +1107,7 @@ router.post('/shadowban-checker', requireAuth, ensureBalance, async (req: Reques
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify({
-          status: 'At Risk',
-          risk_level: 'Medium',
-          reason: 'Indikator simulasi.',
-          tips: ['Kurangi spam', 'Perbaiki interaksi']
-        }),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Shadowban Checker Error:', error)
@@ -1295,15 +1150,7 @@ router.post('/bio-optimizer', requireAuth, ensureBalance, async (req: Request, r
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify([
-          { style: 'Professional', bio: 'Bio simulasi singkat.' }
-        ]),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Bio Optimizer Error:', error)
@@ -1343,18 +1190,7 @@ router.post('/thumbnail-tester', requireAuth, ensureBalance, async (req: Request
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify({
-          winner: 'Concept A',
-          score_a: '8/10',
-          score_b: '6/10',
-          reason: 'Kontras dan teks lebih jelas.'
-        }),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Thumbnail Tester Error:', error)
@@ -1395,22 +1231,7 @@ router.post('/color-grading', requireAuth, ensureBalance, async (req: Request, r
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
-      // await deductToken((req as AuthRequest).user!.id)
-      res.status(200).json({
-        success: true,
-        data: JSON.stringify({
-          style_name: 'Teal & Orange',
-          settings: {
-            contrast: '+10',
-            saturation: '+5',
-            temperature: 'Warm (+5)',
-            tint: 'Neutral'
-          },
-          description: 'Simulasi setting standar.'
-        }),
-        model: modelName,
-        fallback: true
-      })
+      res.status(503).json({ success: false, error: "AI sedang sibuk atau rate limit tercapai. Silakan coba lagi dalam beberapa detik." })
       return
     }
     console.error('Color Grading Error:', error)
