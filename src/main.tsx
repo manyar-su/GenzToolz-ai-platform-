@@ -4,20 +4,12 @@ import { Analytics } from '@vercel/analytics/react'
 import App from './App'
 import './index.css'
 
-console.log('Main.tsx executing...');
+const rootEl = document.getElementById('root');
+if (!rootEl) throw new Error('Root element not found');
 
-try {
-  const root = document.getElementById('root');
-  if (!root) throw new Error('Root element not found');
-
-  createRoot(root).render(
-    <StrictMode>
-      <App />
-      <Analytics />
-    </StrictMode>,
-  )
-  console.log('React app mounted');
-} catch (error) {
-  console.error('Failed to mount app:', error);
-  document.body.innerHTML = `<div style="color: red; padding: 20px;"><h1>App Crash</h1><pre>${error}</pre></div>`;
-}
+createRoot(rootEl).render(
+  <StrictMode>
+    <App />
+    <Analytics />
+  </StrictMode>,
+);

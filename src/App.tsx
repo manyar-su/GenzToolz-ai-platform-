@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AlertProvider } from "@/context/AlertContext";
-import { useEffect } from 'react';
+import { useEffect, Component, type ReactNode } from 'react';
 import { useUserStore } from "@/store/useUserStore";
 import Layout from "@/components/Layout";
 import SupabaseCheck from "@/components/SupabaseCheck";
@@ -43,6 +43,36 @@ import SmartVideoClipper from "@/pages/tools/SmartVideoClipper";
 import ObjectRemover from "@/pages/tools/ObjectRemover";
 import WatermarkRemover from "@/pages/tools/WatermarkRemover";
 
+// Error Boundary
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: string }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: '' };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error.message };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 p-8 text-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Terjadi Kesalahan</h1>
+            <p className="text-gray-500 mb-4">{this.state.error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
+            >
+              Muat Ulang
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   console.log('App component rendering...');
   const { initializeGuest } = useUserStore();
@@ -52,9 +82,10 @@ export default function App() {
   }, [initializeGuest]);
 
   return (
-    <AlertProvider>
-      <Router>
-        <Layout>
+    <ErrorBoundary>
+      <AlertProvider>
+        <Router>
+          <Layout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
@@ -104,8 +135,9 @@ export default function App() {
           <Route path="/topup" element={<Topup />} />
           <Route path="/other" element={<div className="text-center text-xl">Other Page - Coming Soon</div>} />
         </Routes>
-      </Layout>
-    </Router>
-  </AlertProvider>
+        </Layout>
+      </Router>
+    </AlertProvider>
+    </ErrorBoundary>
   );
 }
