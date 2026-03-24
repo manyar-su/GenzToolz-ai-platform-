@@ -73,20 +73,23 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   login: async (email, password) => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
+
       const data = await response.json();
       
       if (data.success) {
-        // 1. Set Supabase Session (CRITICAL for authorizedFetch & RLS)
         if (data.data.session) {
-            const { error: sessionError } = await supabase.auth.setSession(data.data.session);
-            if (sessionError) console.error("Failed to set Supabase session:", sessionError);
+            await supabase.auth.setSession(data.data.session);
         }
-
         set({
             isLoggedIn: true,
             id: data.data.user.id,
@@ -96,35 +99,62 @@ export const useUserStore = create<UserState>((set, get) => ({
             referralCode: data.data.user.user_code || data.data.user.referral_code,
             referredBy: data.data.user.referred_by,
         });
-        
-        // 2. Sync Token & Stats
         get().syncProfile();
-        useTokenStore.getState().fetchBalance(); // Trigger token update
-        
+        useTokenStore.getState().fetchBalance();
         return { success: true };
       }
       return { success: false, error: data.error };
     } catch (err: any) {
-      return { success: false, error: err.message };
+      // Backend unreachable — fallback: login langsung via Supabase client
+      console.warn('Backend login failed, using Supabase client fallback:', err.message);
+      try {
+        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+        if (loginError) {
+          if (loginError.message.includes('Invalid login credentials')) return { success: false, error: 'Email atau password salah.' };
+          return { success: false, error: loginError.message };
+        }
+
+        const { data: profile } = await supabase
+          .from('profiles').select('*').eq('id', loginData.user.id).single();
+
+        set({
+          isLoggedIn: true,
+          id: loginData.user.id,
+          name: profile?.full_name || loginData.user.user_metadata?.full_name || 'User',
+          avatar: profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${loginData.user.email}`,
+          email: loginData.user.email || email,
+          referralCode: profile?.user_code || profile?.referral_code || '',
+          referredBy: profile?.referred_by || null,
+        });
+        get().syncProfile();
+        useTokenStore.getState().fetchBalance();
+        return { success: true };
+      } catch (fallbackErr: any) {
+        return { success: false, error: 'Gagal login. Periksa koneksi internet Anda.' };
+      }
     }
   },
 
   register: async (email, password, name, refCode = null) => {
+    // Try backend first, fallback to Supabase client if backend unreachable
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, full_name: name, ref_code: refCode })
+        body: JSON.stringify({ email, password, full_name: name, ref_code: refCode }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
+
       const data = await response.json();
       
       if (data.success) {
-        // 1. Set Supabase Session
         if (data.data.session) {
-            const { error: sessionError } = await supabase.auth.setSession(data.data.session);
-            if (sessionError) console.error("Failed to set Supabase session:", sessionError);
+            await supabase.auth.setSession(data.data.session);
         }
-
         set({
             isLoggedIn: true,
             id: data.data.user.id,
@@ -134,15 +164,59 @@ export const useUserStore = create<UserState>((set, get) => ({
             referralCode: data.data.user.user_code,
             referredBy: refCode || null,
         });
-
-        // 2. Sync Token & Stats
         get().syncProfile();
-
         return { success: true };
       }
       return { success: false, error: data.error };
     } catch (err: any) {
-      return { success: false, error: err.message };
+      // Backend unreachable — fallback: register langsung via Supabase client
+      console.warn('Backend register failed, using Supabase client fallback:', err.message);
+      try {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: name } }
+        });
+
+        if (signUpError) {
+          if (signUpError.message.toLowerCase().includes('already registered') || signUpError.message.toLowerCase().includes('already exists')) {
+            return { success: false, error: 'Email sudah terdaftar. Silakan login.' };
+          }
+          return { success: false, error: signUpError.message };
+        }
+
+        if (!signUpData.user) return { success: false, error: 'Gagal membuat akun' };
+
+        // Auto login after signup
+        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+        if (loginError) return { success: false, error: loginError.message };
+
+        // Create profile manually
+        const userCode = `genz-${Math.random().toString(36).substring(2, 7)}`;
+        await supabase.from('profiles').upsert([{
+          id: signUpData.user.id,
+          email,
+          full_name: name,
+          user_code: userCode,
+          referral_code: userCode,
+          balance_tokens: 10,
+          referred_by: null,
+        }]);
+
+        set({
+          isLoggedIn: true,
+          id: signUpData.user.id,
+          name,
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
+          email,
+          referralCode: userCode,
+          referredBy: refCode || null,
+        });
+        get().syncProfile();
+        return { success: true };
+      } catch (fallbackErr: any) {
+        return { success: false, error: 'Gagal mendaftar. Periksa koneksi internet Anda.' };
+      }
     }
   },
 
