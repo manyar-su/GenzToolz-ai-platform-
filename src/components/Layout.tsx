@@ -2,7 +2,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Menu, X, Moon, Sun, Coins,
-  User, History, Wrench, ChevronUp, ShieldCheck
+  User, History, Wrench, ChevronUp, ShieldCheck, Wallet
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useTokenStore } from '../store/useTokenStore';
@@ -48,6 +48,7 @@ export default function Layout({ children }: LayoutProps) {
     { icon: Wrench, label: 'Tools', path: '/tools' },
     { icon: History, label: 'Riwayat', path: '/history' },
     { icon: Users, label: 'Affiliate', path: '/affiliate' },
+    { icon: Wallet, label: 'Top Up', path: '/topup' },
     { icon: User, label: 'Profile', path: '/profile' },
     ...(isAdmin ? [{ icon: ShieldCheck, label: 'Admin Panel', path: '/admin' }] : []),
   ];

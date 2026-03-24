@@ -28,9 +28,15 @@ export default function Login() {
     setError('');
     setLoading(true);
 
+    const translateLoginError = (msg: string) => {
+      if (msg.includes('Email not confirmed')) return 'Email belum dikonfirmasi. Hubungi admin atau coba daftar ulang.';
+      if (msg.includes('Invalid login credentials')) return 'Email atau password salah.';
+      if (msg.includes('Too many requests')) return 'Terlalu banyak percobaan. Tunggu beberapa menit.';
+      if (msg.includes('Failed to fetch') || msg.includes('fetch failed')) return 'Tidak dapat terhubung ke server.';
+      return msg;
+    };
+
     try {
-      // Login via API to get session AND profile data in one go (or use client directly)
-      // Let's use the API endpoint we made to ensure we get the full user object including profile
       const response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -40,7 +46,7 @@ export default function Login() {
       const data = await response.json();
 
       if (!data.success) {
-          throw new Error(data.error || 'Login gagal');
+          throw new Error(translateLoginError(data.error || 'Login gagal'));
       }
       
       // Update Supabase Client Session

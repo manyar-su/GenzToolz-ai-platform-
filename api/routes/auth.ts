@@ -8,113 +8,99 @@ import { supabase, supabaseAdmin } from '../lib/supabase.js'
 const router = Router()
 
 /**
- * User Registration (Standard Email/Password + Custom User ID)
+ * Register — langsung aktif tanpa konfirmasi email
  * POST /api/auth/register
  */
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   const { email, password, full_name, ref_code } = req.body
 
   if (!email || !password || !full_name) {
-    res.status(400).json({
-      success: false,
-      error: 'Name, Email and Password are required',
-    })
+    res.status(400).json({ success: false, error: 'Nama, Email, dan Password wajib diisi' })
     return
   }
 
   try {
-    // 1. Sign Up in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Buat akun via Admin API — email_confirm: true = langsung aktif, tanpa OTP
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: { full_name }
-      }
+      email_confirm: true,
+      user_metadata: { full_name }
     })
 
     if (authError) {
+      if (authError.message.includes('already been registered') || authError.message.includes('already exists')) {
+        res.status(400).json({ success: false, error: 'Email sudah terdaftar. Silakan login.' })
+        return
+      }
       res.status(400).json({ success: false, error: authError.message })
       return
     }
 
     if (!authData.user) {
-        res.status(500).json({ success: false, error: 'Failed to create user' })
-        return
+      res.status(500).json({ success: false, error: 'Gagal membuat akun' })
+      return
     }
 
-    // 2. Generate unique user code (genz-XXXXX) — retry until no duplicate
-    const userCode = await generateUniqueCode();
+    // Generate unique user code
+    const userCode = await generateUniqueCode()
 
-    // Determine Initial Tokens
-    const adminEmail = process.env.VITE_ADMIN_EMAIL || process.env.ADMIN_EMAIL;
-    const adminTokens = parseInt(process.env.VITE_ADMIN_TOKENS || process.env.ADMIN_TOKENS || '1000');
-    const initialTokens = email === adminEmail ? adminTokens : 10;
+    const adminEmail = process.env.VITE_ADMIN_EMAIL || process.env.ADMIN_EMAIL
+    const adminTokens = parseInt(process.env.VITE_ADMIN_TOKENS || process.env.ADMIN_TOKENS || '1000')
+    const initialTokens = email === adminEmail ? adminTokens : 10
 
-    // Resolve referrer
-    const referrerId = ref_code ? await getReferrerId(ref_code) : null;
+    const referrerId = ref_code ? await getReferrerId(ref_code) : null
 
-    // 3. Create Profile Entry (use admin client to bypass RLS)
+    // Buat profil
     const { error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .insert([{
-            id: authData.user.id,
-            email: email,
-            full_name: full_name,
-            user_code: userCode,
-            referral_code: userCode,
-            balance_tokens: initialTokens,
-            referred_by: referrerId
-        }]);
+      .from('profiles')
+      .insert([{
+        id: authData.user.id,
+        email,
+        full_name,
+        user_code: userCode,
+        referral_code: userCode,
+        balance_tokens: initialTokens,
+        referred_by: referrerId
+      }])
 
     if (profileError) {
-        console.error('Profile creation failed:', profileError);
-        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-        res.status(500).json({ success: false, error: 'Failed to create profile: ' + profileError.message });
-        return;
+      console.error('Profile creation failed:', profileError)
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+      res.status(500).json({ success: false, error: 'Gagal membuat profil: ' + profileError.message })
+      return
     }
 
-    // 4. Give referral bonus to referrer (20 tokens)
+    // Bonus referral ke pengundang
     if (referrerId) {
-        const REFERRAL_BONUS = parseInt(process.env.VITE_REFERRAL_BONUS || '20');
-        const { data: referrer } = await supabaseAdmin
-            .from('profiles')
-            .select('balance_tokens')
-            .eq('id', referrerId)
-            .single();
-        if (referrer) {
-            await supabaseAdmin
-                .from('profiles')
-                .update({ balance_tokens: (referrer.balance_tokens || 0) + REFERRAL_BONUS })
-                .eq('id', referrerId);
-            // Log bonus transaction
-            await supabaseAdmin.from('transactions').insert([{
-                user_id: referrerId,
-                amount_paid: 0,
-                tokens_received: REFERRAL_BONUS,
-                package_name: `REFERRAL_BONUS from ${userCode}`,
-                status: 'success',
-                payment_gateway_id: 'referral'
-            }]);
-        }
+      const REFERRAL_BONUS = parseInt(process.env.VITE_REFERRAL_BONUS || '20')
+      const { data: referrer } = await supabaseAdmin
+        .from('profiles').select('balance_tokens').eq('id', referrerId).single()
+      if (referrer) {
+        await supabaseAdmin.from('profiles')
+          .update({ balance_tokens: (referrer.balance_tokens || 0) + REFERRAL_BONUS })
+          .eq('id', referrerId)
+        await supabaseAdmin.from('transactions').insert([{
+          user_id: referrerId, amount_paid: 0, tokens_received: REFERRAL_BONUS,
+          package_name: `REFERRAL_BONUS from ${userCode}`, status: 'success',
+          payment_gateway_id: 'referral'
+        }])
+      }
     }
+
+    // Buat session langsung agar user bisa login otomatis
+    const { data: sessionData } = await supabase.auth.signInWithPassword({ email, password })
 
     res.status(200).json({
       success: true,
       data: {
-        user: {
-            ...authData.user,
-            user_code: userCode,
-            balance_tokens: initialTokens
-        },
-        session: authData.session,
-      },
+        user: { ...authData.user, user_code: userCode, balance_tokens: initialTokens },
+        session: sessionData?.session || null,
+      }
     })
   } catch (err: any) {
     console.error('Registration error:', err)
-    res.status(500).json({
-      success: false,
-      error: err.message || 'Internal server error',
-    })
+    res.status(500).json({ success: false, error: err.message || 'Internal server error' })
   }
 })
 

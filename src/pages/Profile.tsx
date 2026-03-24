@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTokenStore } from '../store/useTokenStore';
 import { useUserStore } from '../store/useUserStore';
 import { useAlert } from '../context/AlertContext';
 import { useTheme } from '../hooks/useTheme';
-import { ArrowLeft, User, Mail, CreditCard, Edit2, RefreshCw, X, Check, Gem, Zap, Crown, Share2, Copy, Users, LogOut, Gift, Send, Loader2, Moon, Sun, Clock, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, User, Mail, CreditCard, Edit2, RefreshCw, X, Check, Gem, Zap, Crown, Share2, Copy, Users, LogOut, Gift, Send, Loader2, Moon, Sun, Clock, Eye, EyeOff, Upload, ImageIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { authorizedFetch } from '../lib/api-client';
 
@@ -38,6 +38,24 @@ export default function Profile() {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [walletTab, setWalletTab] = useState<'topup' | 'transfer' | 'history'>('topup');
   const [welcomeMessage, setWelcomeMessage] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+
+  // Avatar & Background
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [coverBg, setCoverBg] = useState('from-blue-600 to-purple-600');
+  const [showBgPicker, setShowBgPicker] = useState(false);
+  const avatarUploadRef = useRef<HTMLInputElement>(null);
+
+  const bgOptions = [
+    { label: 'Biru-Ungu', value: 'from-blue-600 to-purple-600' },
+    { label: 'Hijau-Teal', value: 'from-green-500 to-teal-500' },
+    { label: 'Oranye-Merah', value: 'from-orange-500 to-red-500' },
+    { label: 'Pink-Ungu', value: 'from-pink-500 to-purple-500' },
+    { label: 'Kuning-Oranye', value: 'from-yellow-400 to-orange-500' },
+    { label: 'Biru-Cyan', value: 'from-blue-500 to-cyan-400' },
+    { label: 'Indigo-Biru', value: 'from-indigo-600 to-blue-400' },
+    { label: 'Abu-Hitam', value: 'from-gray-700 to-gray-900' },
+  ];
   
   // Transfer State
   const [transferReceiver, setTransferReceiver] = useState('');
@@ -140,6 +158,7 @@ export default function Profile() {
 
   const handleGenerateAvatar = async () => {
     setIsGeneratingAvatar(true);
+    setShowAvatarMenu(false);
     try {
       await generateRandomAvatar();
     } catch (error) {
@@ -147,6 +166,41 @@ export default function Profile() {
     } finally {
       setIsGeneratingAvatar(false);
     }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setShowAvatarMenu(false);
+
+    // Max 2MB
+    if (file.size > 2 * 1024 * 1024) {
+      showAlert('Ukuran file maksimal 2MB', 'error');
+      return;
+    }
+
+    try {
+      const { id } = useUserStore.getState();
+      const ext = file.name.split('.').pop();
+      const path = `avatars/${id}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+      const publicUrl = urlData.publicUrl;
+
+      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', id);
+      useUserStore.setState({ avatar: publicUrl });
+      showAlert('Avatar berhasil diperbarui!', 'success');
+    } catch (err: any) {
+      showAlert('Gagal upload avatar: ' + err.message, 'error');
+    }
+    // reset input
+    if (avatarUploadRef.current) avatarUploadRef.current.value = '';
   };
 
   const handleTopup = async (amount: number, price: number, packageName: string) => {
@@ -436,80 +490,121 @@ export default function Profile() {
             {/* Left Column: Profile & Actions */}
             <div className="lg:col-span-2 space-y-8">
                 {/* Profile Card */}
-                <div 
-                  className="overflow-hidden rounded-2xl bg-white shadow-lg dark:bg-gray-800 transition-colors duration-200"
-                  data-template-id="profile-card-template"
-                >
-                  <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600 md:h-40"></div>
-                  <div className="relative px-6 pb-8 md:px-8">
-                    <div className="absolute -top-16 flex flex-col items-center md:-top-16 md:items-start">
-                      <div className="relative group">
-                        <img 
-                          src={avatar} 
-                          alt="Profile" 
-                          className="h-32 w-32 rounded-full border-4 border-white bg-white object-cover shadow-md dark:border-gray-800 dark:bg-gray-700"
-                        />
-                        <button 
-                          onClick={handleGenerateAvatar}
-                          disabled={isGeneratingAvatar}
-                          className={`absolute bottom-2 right-2 rounded-full bg-white p-2 shadow-lg hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all ${isGeneratingAvatar ? 'opacity-75 cursor-not-allowed' : ''}`}
-                          title="Acak Avatar"
-                        >
-                          <RefreshCw className={`h-4 w-4 text-gray-600 dark:text-gray-300 ${isGeneratingAvatar ? 'animate-spin' : ''}`} />
-                        </button>
-                      </div>
-                    </div>
+                <div className="overflow-hidden rounded-2xl bg-white shadow-lg dark:bg-gray-800 transition-colors duration-200">
+                  {/* Cover Background */}
+                  <div className={`relative h-32 bg-gradient-to-r ${coverBg} md:h-40`}>
+                    <button
+                      onClick={() => setShowBgPicker(!showBgPicker)}
+                      className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-black/30 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm hover:bg-black/50 transition"
+                    >
+                      <ImageIcon className="h-3.5 w-3.5" /> Ganti Latar
+                    </button>
 
-                    <div className="mt-20 flex flex-col justify-between gap-6 md:mt-4 md:ml-40 md:flex-row md:items-center">
-                      <div>
+                    {/* Background Picker */}
+                    {showBgPicker && (
+                      <div className="absolute bottom-12 right-3 z-20 rounded-xl bg-white p-3 shadow-xl dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                        <p className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-300">Pilih Warna Latar</p>
+                        <div className="grid grid-cols-4 gap-2">
+                          {bgOptions.map(bg => (
+                            <button
+                              key={bg.value}
+                              onClick={() => { setCoverBg(bg.value); setShowBgPicker(false); }}
+                              className={`h-8 w-8 rounded-lg bg-gradient-to-br ${bg.value} ring-2 transition hover:scale-110 ${coverBg === bg.value ? 'ring-white' : 'ring-transparent'}`}
+                              title={bg.label}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="px-6 pb-6 md:px-8">
+                    {/* Avatar row — sits half on cover, half on white */}
+                    <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:gap-6 -mt-12 sm:-mt-14">
+                      {/* Avatar + controls */}
+                      <div className="relative flex-shrink-0">
+                        <img
+                          src={avatar}
+                          alt="Profile"
+                          className="h-24 w-24 rounded-full border-4 border-white bg-white object-cover shadow-lg dark:border-gray-800 sm:h-28 sm:w-28"
+                        />
+                        {/* Avatar action buttons */}
+                        <div className="absolute -bottom-1 -right-1 flex gap-1">
+                          <button
+                            onClick={handleGenerateAvatar}
+                            disabled={isGeneratingAvatar}
+                            title="Acak Avatar"
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md hover:bg-blue-50 dark:bg-gray-700 dark:hover:bg-gray-600 transition border border-gray-200 dark:border-gray-600"
+                          >
+                            <RefreshCw className={`h-3.5 w-3.5 text-blue-600 dark:text-blue-400 ${isGeneratingAvatar ? 'animate-spin' : ''}`} />
+                          </button>
+                          <button
+                            onClick={() => avatarUploadRef.current?.click()}
+                            title="Upload Foto"
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md hover:bg-green-50 dark:bg-gray-700 dark:hover:bg-gray-600 transition border border-gray-200 dark:border-gray-600"
+                          >
+                            <Upload className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                          </button>
+                        </div>
+                        <input
+                          ref={avatarUploadRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleAvatarUpload}
+                        />
+                      </div>
+
+                      {/* Name + email + ID — pushed down on mobile, inline on desktop */}
+                      <div className="flex-1 min-w-0 text-center sm:text-left pb-1">
                         {isEditingName ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-center sm:justify-start gap-2">
                             <input
                               type="text"
                               value={newName}
-                              onChange={(e) => setNewName(e.target.value)}
+                              onChange={e => setNewName(e.target.value)}
                               className="rounded-lg border border-gray-300 px-3 py-1 text-lg font-bold focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             />
-                            <button onClick={handleSaveName} className="rounded-full bg-green-100 p-2 text-green-600 hover:bg-green-200">
+                            <button onClick={handleSaveName} className="rounded-full bg-green-100 p-1.5 text-green-600 hover:bg-green-200">
                               <Check className="h-4 w-4" />
                             </button>
-                            <button onClick={() => setIsEditingName(false)} className="rounded-full bg-red-100 p-2 text-red-600 hover:bg-red-200">
+                            <button onClick={() => setIsEditingName(false)} className="rounded-full bg-red-100 p-1.5 text-red-600 hover:bg-red-200">
                               <X className="h-4 w-4" />
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{name}</h1>
-                            <button onClick={() => setIsEditingName(true)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                          <div className="flex items-center justify-center sm:justify-start gap-2">
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">{name}</h1>
+                            <button onClick={() => setIsEditingName(true)} className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                               <Edit2 className="h-4 w-4" />
                             </button>
                           </div>
                         )}
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{email}</p>
-                        <div className="mt-1 flex items-center gap-2 rounded-md bg-gray-100 px-2 py-1 dark:bg-gray-700 w-fit">
-                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">ID:</span>
-                            <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 select-all">{referralCode}</span>
-                            <button onClick={() => copyToClipboard(referralCode)} className="text-gray-400 hover:text-blue-500" title="Salin ID">
-                                <Copy className="h-3 w-3" />
-                            </button>
+                        <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400 truncate">{email}</p>
+                        <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-gray-100 px-2 py-1 dark:bg-gray-700">
+                          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">ID:</span>
+                          <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 select-all">{referralCode}</span>
+                          <button onClick={() => copyToClipboard(referralCode)} className="text-gray-400 hover:text-blue-500" title="Salin ID">
+                            <Copy className="h-3 w-3" />
+                          </button>
                         </div>
                       </div>
 
-                      <div className="flex gap-3">
-                          <button
-                            onClick={() => { setIsWalletModalOpen(true); setWalletTab('topup'); }}
-                            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-yellow-400 to-orange-500 px-6 py-3 font-bold text-white shadow-lg transition transform hover:scale-105 hover:shadow-xl"
-                          >
-                            <Gem className="h-5 w-5" />
-                            Top Up
-                          </button>
-                          <button
-                            onClick={handleLogout}
-                            className="flex items-center justify-center rounded-xl bg-red-50 px-4 py-3 text-red-500 hover:bg-red-100 dark:bg-red-900/20"
-                            title="Logout"
-                          >
-                            <LogOut className="h-5 w-5" />
-                          </button>
+                      {/* Action buttons */}
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => { setIsWalletModalOpen(true); setWalletTab('topup'); }}
+                          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-yellow-400 to-orange-500 px-5 py-2.5 font-bold text-white shadow-lg transition hover:scale-105"
+                        >
+                          <Gem className="h-4 w-4" /> Top Up
+                        </button>
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center justify-center rounded-xl bg-red-50 px-3 py-2.5 text-red-500 hover:bg-red-100 dark:bg-red-900/20"
+                          title="Logout"
+                        >
+                          <LogOut className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                   </div>
