@@ -24,9 +24,12 @@ dist-ssr
 *.sw?
 .vite
 
-# Environment variables
+# Environment variables — JANGAN pernah commit file ini
 .env
 .env.*
+.env.local
+.env.production
+.env.development
 !.env.example
 
 # Diagnostic reports (https://nodejs.org/api/report.html)

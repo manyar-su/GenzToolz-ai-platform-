@@ -21,6 +21,7 @@ interface TokenState {
   addToken: (amount: number) => Promise<void>; // Only for simulated Top-up in this context
   transferToken: (receiverCode: string, amount: number, message: string) => Promise<{ success: boolean; message: string }>;
   reset: () => void;
+  subscribeToBalance: () => () => void; // Returns unsubscribe function
 }
 
 export const useTokenStore = create<TokenState>((set, get) => ({
@@ -29,6 +30,38 @@ export const useTokenStore = create<TokenState>((set, get) => ({
   loading: false,
 
   reset: () => set({ tokens: 0, transactions: [] }),
+
+  subscribeToBalance: () => {
+    // Safety check for placeholder/dev environment
+    if (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')) {
+      return () => {};
+    }
+
+    const userId = useUserStore.getState().id;
+    if (!userId) return () => {};
+
+    const channel = supabase
+      .channel(`public:profiles:id=eq.${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userId}`,
+        },
+        (payload) => {
+          if (payload.new && typeof payload.new.balance_tokens === 'number') {
+            set({ tokens: payload.new.balance_tokens });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  },
 
   fetchBalance: async () => {
     // Mock for local dev without Supabase
@@ -40,20 +73,20 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     const userId = useUserStore.getState().id;
     if (!userId) return;
 
-    // Check if current user is Admin and sync tokens from Env
-    // This allows "editing tokens when run out" by changing .env and reloading
-    const userEmail = useUserStore.getState().email;
-    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
-    
-    if (userEmail && userEmail === adminEmail) {
-        const adminTokens = parseInt(import.meta.env.VITE_ADMIN_TOKENS || '10000');
-        // We only update if local state is different to avoid loop, 
-        // but to support "refill", we should check DB value or just force update.
-        // Let's force update the DB to match Env
-        await supabase.from('profiles').update({ balance_tokens: adminTokens }).eq('id', userId);
-        set({ tokens: adminTokens });
+    // Special handling for Hardcoded Admin User
+    if (userId === 'admin_user') {
+        set({ tokens: 1000 });
         return;
     }
+
+    // Check if current user is Admin (via Email match) but has real UUID
+    // Remove auto-reset logic to allow admin token persistence
+    // const userEmail = useUserStore.getState().email;
+    // const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+    
+    // if (userEmail && userEmail === adminEmail) {
+    //     // Admin Logic Removed: Treat admin like normal user for token balance
+    // }
 
     const { data, error } = await supabase
         .from('profiles')
@@ -74,7 +107,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     if (!userId || currentTokens < amount) return false;
 
     // Optimistic Update (Server handles actual DB deduction via RPC)
-    // set({ tokens: currentTokens - amount }); // Disabled to prevent deduction on failure
+    set({ tokens: currentTokens - amount }); 
     
     // We rely on the server response to confirm the transaction.
     // If the server returns 402, the UI handles it.
@@ -104,23 +137,58 @@ export const useTokenStore = create<TokenState>((set, get) => ({
   transferToken: async (receiverCode, amount, message) => {
     set({ loading: true });
     
+    // Admin Transfer Bypass
+    const userId = useUserStore.getState().id;
+    if (userId === 'admin_user') {
+         try {
+            const response = await fetch('/api/auth/admin-transfer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer admin-secret-token'
+                },
+                body: JSON.stringify({ receiver_code: receiverCode, amount })
+            });
+            const data = await response.json();
+            set({ loading: false });
+            if (data.success) {
+                return { success: true, message: data.message };
+            } else {
+                return { success: false, message: data.error || 'Transfer gagal' };
+            }
+        } catch (err: any) {
+            set({ loading: false });
+            return { success: false, message: err.message || 'Terjadi kesalahan sistem' };
+        }
+    }
+
     try {
-        const { data, error } = await supabase.rpc('transfer_tokens', {
-            p_receiver_code: receiverCode,
-            p_amount: amount,
-            p_message: message
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('Not authenticated');
+
+        const response = await fetch('/api/auth/transfer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ 
+                receiver_identifier: receiverCode, 
+                amount, 
+                message 
+            })
         });
+
+        const data = await response.json();
 
         set({ loading: false });
 
-        if (error) throw error;
-
-        if (data && data.success) {
+        if (data.success) {
             // Refresh balance
             await get().fetchBalance();
             return { success: true, message: 'Transfer Berhasil!' };
         } else {
-            return { success: false, message: data?.message || 'Transfer Gagal' };
+            return { success: false, message: data.error || 'Transfer Gagal' };
         }
 
     } catch (err: any) {

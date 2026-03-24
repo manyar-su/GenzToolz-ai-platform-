@@ -168,7 +168,7 @@ export default function AllInOneDownloader() {
   };
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
       <div className="mx-auto max-w-4xl">
         <button 
           onClick={() => navigate('/')}
@@ -177,7 +177,7 @@ export default function AllInOneDownloader() {
           <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
         </button>
 
-        <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-gray-100 dark:bg-gray-800 dark:ring-gray-700">
+        <div className="rounded-xl bg-white dark:bg-gray-800 p-8 shadow-sm ring-1 ring-gray-100 dark:bg-gray-800 dark:ring-gray-700">
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400">
               <Download className="h-8 w-8" />

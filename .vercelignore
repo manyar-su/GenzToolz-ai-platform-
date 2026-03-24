@@ -5,3 +5,7 @@ dist
 .trae
 .log
 .figma
+.env
+.env.local
+.env.development
+.env.production

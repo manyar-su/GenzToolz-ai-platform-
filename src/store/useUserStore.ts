@@ -81,6 +81,12 @@ export const useUserStore = create<UserState>((set, get) => ({
       const data = await response.json();
       
       if (data.success) {
+        // 1. Set Supabase Session (CRITICAL for authorizedFetch & RLS)
+        if (data.data.session) {
+            const { error: sessionError } = await supabase.auth.setSession(data.data.session);
+            if (sessionError) console.error("Failed to set Supabase session:", sessionError);
+        }
+
         set({
             isLoggedIn: true,
             id: data.data.user.id,
@@ -90,8 +96,11 @@ export const useUserStore = create<UserState>((set, get) => ({
             referralCode: data.data.user.user_code || data.data.user.referral_code,
             referredBy: data.data.user.referred_by,
         });
-        // Sync additional stats
+        
+        // 2. Sync Token & Stats
         get().syncProfile();
+        useTokenStore.getState().fetchBalance(); // Trigger token update
+        
         return { success: true };
       }
       return { success: false, error: data.error };
@@ -110,6 +119,12 @@ export const useUserStore = create<UserState>((set, get) => ({
       const data = await response.json();
       
       if (data.success) {
+        // 1. Set Supabase Session
+        if (data.data.session) {
+            const { error: sessionError } = await supabase.auth.setSession(data.data.session);
+            if (sessionError) console.error("Failed to set Supabase session:", sessionError);
+        }
+
         set({
             isLoggedIn: true,
             id: data.data.user.id,
@@ -119,7 +134,10 @@ export const useUserStore = create<UserState>((set, get) => ({
             referralCode: data.data.user.user_code,
             referredBy: refCode || null,
         });
+
+        // 2. Sync Token & Stats
         get().syncProfile();
+
         return { success: true };
       }
       return { success: false, error: data.error };
@@ -370,6 +388,9 @@ export const useUserStore = create<UserState>((set, get) => ({
       const { id } = get();
       if (!id) return;
 
+      // 0. Sync Token Balance
+      useTokenStore.getState().fetchBalance();
+
       // 1. Get Profile
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', id).single();
       if (profile) {
@@ -401,5 +422,8 @@ export const useUserStore = create<UserState>((set, get) => ({
               totalBonusEarned: totalBonus
           }
       });
+      
+      // 3. Sync Token Balance
+      useTokenStore.getState().fetchBalance();
   }
 }));

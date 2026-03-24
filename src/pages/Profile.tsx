@@ -4,7 +4,7 @@ import { useTokenStore } from '../store/useTokenStore';
 import { useUserStore } from '../store/useUserStore';
 import { useAlert } from '../context/AlertContext';
 import { useTheme } from '../hooks/useTheme';
-import { ArrowLeft, User, Mail, CreditCard, Edit2, RefreshCw, X, Check, Gem, Zap, Crown, Share2, Copy, Users, LogOut, Gift, Send, Loader2, Moon, Sun, Clock } from 'lucide-react';
+import { ArrowLeft, User, Mail, CreditCard, Edit2, RefreshCw, X, Check, Gem, Zap, Crown, Share2, Copy, Users, LogOut, Gift, Send, Loader2, Moon, Sun, Clock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { authorizedFetch } from '../lib/api-client';
 
@@ -25,6 +25,9 @@ export default function Profile() {
   const [authRefCode, setAuthRefCode] = useState('');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
+  const [authConfirmPassword, setAuthConfirmPassword] = useState('');
+  const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [showAuthConfirm, setShowAuthConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -59,8 +62,9 @@ export default function Profile() {
     const action = searchParams.get('action');
 
     if (refCode && !isLoggedIn) {
-        // Logic to store refCode temporarily until registration
         localStorage.setItem('genz_ref_code', refCode);
+        setAuthRefCode(refCode); // Auto-fill the field
+        setAuthMode('register'); // Switch to register tab
     }
 
     if (action === 'topup') {
@@ -83,6 +87,12 @@ export default function Profile() {
 
     if (!authEmail.trim() || !authPassword.trim()) {
         setError('Email dan Password harus diisi');
+        setLoading(false);
+        return;
+    }
+
+    if (authMode === 'register' && authPassword !== authConfirmPassword) {
+        setError('Password dan konfirmasi password tidak cocok');
         setLoading(false);
         return;
     }
@@ -294,12 +304,24 @@ export default function Profile() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ID Affiliator (Opsional)</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    ID Affiliator (Opsional)
+                                    {searchParams.get('ref') && (
+                                        <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                            ✓ Terisi otomatis
+                                        </span>
+                                    )}
+                                </label>
                                 <input
                                     type="text"
                                     value={authRefCode}
                                     onChange={(e) => setAuthRefCode(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    readOnly={!!searchParams.get('ref')}
+                                    className={`w-full rounded-lg border px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
+                                        searchParams.get('ref')
+                                            ? 'bg-green-50 border-green-300 text-green-800 dark:bg-green-900/20 dark:border-green-700 dark:text-green-300 cursor-not-allowed'
+                                            : 'border-gray-300 bg-white'
+                                    }`}
                                     placeholder="Contoh: genz-12345"
                                 />
                             </div>
@@ -319,14 +341,44 @@ export default function Profile() {
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                        <input
-                            type="password"
-                            value={authPassword}
-                            onChange={(e) => setAuthPassword(e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            placeholder="******"
-                        />
+                        <div className="relative">
+                            <input
+                                type={showAuthPassword ? 'text' : 'password'}
+                                value={authPassword}
+                                onChange={(e) => setAuthPassword(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 pr-10 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                placeholder="******"
+                            />
+                            <button type="button" onClick={() => setShowAuthPassword(!showAuthPassword)} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                {showAuthPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                        </div>
                     </div>
+
+                    {authMode === 'register' && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Konfirmasi Password</label>
+                            <div className="relative">
+                                <input
+                                    type={showAuthConfirm ? 'text' : 'password'}
+                                    value={authConfirmPassword}
+                                    onChange={(e) => setAuthConfirmPassword(e.target.value)}
+                                    className={`w-full rounded-lg border px-4 py-2 pr-10 focus:outline-none dark:bg-gray-700 dark:text-white ${
+                                        authConfirmPassword && authPassword !== authConfirmPassword
+                                            ? 'border-red-400 focus:border-red-500 dark:border-red-500'
+                                            : 'border-gray-300 focus:border-blue-500 dark:border-gray-600'
+                                    }`}
+                                    placeholder="Ulangi password"
+                                />
+                                <button type="button" onClick={() => setShowAuthConfirm(!showAuthConfirm)} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                    {showAuthConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
+                            {authConfirmPassword && authPassword !== authConfirmPassword && (
+                                <p className="mt-1 text-xs text-red-500">Password tidak cocok</p>
+                            )}
+                        </div>
+                    )}
 
                     {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 

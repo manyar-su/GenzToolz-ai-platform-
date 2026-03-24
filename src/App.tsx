@@ -9,6 +9,7 @@ import Profile from "@/pages/Profile";
 import History from "@/pages/History";
 import Admin from "@/pages/Admin";
 import Topup from "@/pages/Topup";
+import Tools from "@/pages/Tools";
 
 // Tools
 import ScriptArchitect from "@/pages/tools/ScriptArchitect";
@@ -57,6 +58,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
+          <Route path="/tools" element={<Tools />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/history" element={<History />} />
           <Route path="/admin" element={<Admin />} />

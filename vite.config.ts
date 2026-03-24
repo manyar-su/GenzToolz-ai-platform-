@@ -15,9 +15,11 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   server: {
+    host: '127.0.0.1', // Force IPv4 to avoid EACCES on IPv6
+    port: 3005,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:3010',
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {

@@ -104,7 +104,7 @@ export default function AudioVisualizer() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
       <div className="mx-auto max-w-4xl">
         <button 
           onClick={() => navigate('/')}
@@ -113,8 +113,8 @@ export default function AudioVisualizer() {
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
         </button>
 
-        <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-          <h1 className="mb-6 text-2xl font-bold text-gray-900">Audio Visualizer</h1>
+        <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm ring-1 ring-gray-100 dark:ring-gray-700">
+          <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">Audio Visualizer</h1>
           
           <div className="mb-8 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center">
             {!audioFile ? (
@@ -136,7 +136,7 @@ export default function AudioVisualizer() {
             ) : (
               <div className="w-full">
                 <div className="mb-6 flex items-center justify-center">
-                  <span className="font-medium text-gray-900">{audioFile.name}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{audioFile.name}</span>
                   <button 
                     onClick={() => setAudioFile(null)}
                     className="ml-2 text-sm text-red-500 hover:text-red-700"

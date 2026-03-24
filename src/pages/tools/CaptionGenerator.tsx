@@ -87,7 +87,7 @@ export default function CaptionGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
       <div className="mx-auto max-w-4xl">
         <button 
           onClick={() => navigate('/')}
@@ -98,24 +98,24 @@ export default function CaptionGenerator() {
 
         <div className="grid gap-8 md:grid-cols-2">
           {/* Input Section */}
-          <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-            <h1 className="mb-2 text-2xl font-bold text-gray-900">Caption & Hashtag Generator</h1>
+          <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm ring-1 ring-gray-100 dark:ring-gray-700">
+            <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Caption & Hashtag Generator</h1>
             
-            <div className="mb-6 rounded-lg bg-blue-50 p-4 text-sm text-blue-800">
+            <div className="mb-6 rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4 text-sm text-blue-800 dark:text-blue-300">
               <div className="flex items-start">
                 <Info className="mr-2 h-5 w-5 flex-shrink-0" />
                 <p>
                   <strong>Cara Penggunaan:</strong> Jelaskan isi postingan Anda (foto/video) dan pilih nada bicara (tone). 
                   AI akan membuatkan caption menarik beserta hashtag yang relevan agar masuk FYP.
                   <br/>
-                  <span className="mt-2 block font-semibold text-blue-900">Biaya: 1 Token per generate.</span>
+                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-200">Biaya: 1 Token per generate.</span>
                 </p>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Tentang apa postingan Anda?
                 </label>
                 <textarea
@@ -123,19 +123,19 @@ export default function CaptionGenerator() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Contoh: Foto saya sedang bekerja di kafe, membahas tentang produktivitas..."
-                  className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 p-3 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={4}
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Nada Bicara (Tone)
                 </label>
                 <select
                   value={tone}
                   onChange={(e) => setTone(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 p-2.5 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-2.5 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="Casual">Santai & Seru</option>
                   <option value="Professional">Profesional</option>
@@ -163,24 +163,24 @@ export default function CaptionGenerator() {
 
           {/* Output Section */}
           <div className="space-y-6">
-            <h2 className="text-lg font-bold text-gray-900">Hasil Caption</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Hasil Caption</h2>
             
             {results.length > 0 ? (
               results.map((item, index) => (
-                <div key={index} className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-                  <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
-                    <h3 className="font-semibold text-gray-800">{item.title || `Varian #${index + 1}`}</h3>
+                <div key={index} className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm ring-1 ring-gray-100 dark:ring-gray-700">
+                  <div className="mb-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3">
+                    <h3 className="font-semibold text-gray-800 dark:text-gray-100">{item.title || `Varian #${index + 1}`}</h3>
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleDownload(item.title, item.content)}
-                        className="flex items-center rounded-md bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        className="flex items-center rounded-md bg-gray-50 dark:bg-gray-700 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                       >
                         <Download className="mr-1.5 h-4 w-4" />
                         Download
                       </button>
                       <button
                         onClick={() => handleCopy(item.content, index)}
-                        className="flex items-center rounded-md bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        className="flex items-center rounded-md bg-gray-50 dark:bg-gray-700 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                       >
                         {copiedIndex === index ? (
                           <>
@@ -197,18 +197,18 @@ export default function CaptionGenerator() {
                     </div>
                   </div>
                   
-                  <div className="max-h-[300px] overflow-y-auto rounded-lg bg-gray-50 p-4 text-sm leading-relaxed text-gray-700">
+                  <div className="max-h-[300px] overflow-y-auto rounded-lg bg-gray-50 dark:bg-gray-900 p-4 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
                     <div className="whitespace-pre-wrap">{item.content}</div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="rounded-xl bg-white p-12 text-center shadow-sm ring-1 ring-gray-100">
+              <div className="rounded-xl bg-white dark:bg-gray-800 p-12 text-center shadow-sm ring-1 ring-gray-100 dark:ring-gray-700">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
                   <Copy className="h-6 w-6 text-blue-600" />
                 </div>
-                <h3 className="mb-2 font-medium text-gray-900">Belum ada caption</h3>
-                <p className="text-sm text-gray-500">
+                <h3 className="mb-2 font-medium text-gray-900 dark:text-white">Belum ada caption</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Isi form di samping dan klik "Buat Caption" untuk melihat hasilnya di sini.
                 </p>
               </div>

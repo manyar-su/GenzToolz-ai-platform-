@@ -3,7 +3,7 @@
  * Handle user registration, login, token management, etc.
  */
 import { Router, type Request, type Response } from 'express'
-import { supabase } from '../lib/supabase.js'
+import { supabase, supabaseAdmin } from '../lib/supabase.js'
 
 const router = Router()
 
@@ -42,36 +42,60 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
         return
     }
 
-    // 2. Generate Custom User ID (genz-xxxxx)
-    const randomCode = Math.floor(10000 + Math.random() * 90000);
-    const userCode = `genz-${randomCode}`;
+    // 2. Generate unique user code (genz-XXXXX) — retry until no duplicate
+    const userCode = await generateUniqueCode();
 
     // Determine Initial Tokens
     const adminEmail = process.env.VITE_ADMIN_EMAIL || process.env.ADMIN_EMAIL;
-    const adminTokens = parseInt(process.env.VITE_ADMIN_TOKENS || process.env.ADMIN_TOKENS || '10000');
+    const adminTokens = parseInt(process.env.VITE_ADMIN_TOKENS || process.env.ADMIN_TOKENS || '1000');
     const initialTokens = email === adminEmail ? adminTokens : 10;
 
-    // 3. Create Profile Entry
-    // Note: We use the UUID from authData.user.id as the primary key
-    // but store userCode for display/referral
-    const { error: profileError } = await supabase
+    // Resolve referrer
+    const referrerId = ref_code ? await getReferrerId(ref_code) : null;
+
+    // 3. Create Profile Entry (use admin client to bypass RLS)
+    const { error: profileError } = await supabaseAdmin
         .from('profiles')
         .insert([{
             id: authData.user.id,
             email: email,
             full_name: full_name,
             user_code: userCode,
-            referral_code: userCode, // Same as user_code for simplicity
-            balance_tokens: initialTokens, 
-            referred_by: ref_code ? (await getReferrerId(ref_code)) : null
+            referral_code: userCode,
+            balance_tokens: initialTokens,
+            referred_by: referrerId
         }]);
-    
+
     if (profileError) {
         console.error('Profile creation failed:', profileError);
-        // If profile fails, we might want to delete the auth user or retry
-        // For now, just return error
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
         res.status(500).json({ success: false, error: 'Failed to create profile: ' + profileError.message });
         return;
+    }
+
+    // 4. Give referral bonus to referrer (20 tokens)
+    if (referrerId) {
+        const REFERRAL_BONUS = parseInt(process.env.VITE_REFERRAL_BONUS || '20');
+        const { data: referrer } = await supabaseAdmin
+            .from('profiles')
+            .select('balance_tokens')
+            .eq('id', referrerId)
+            .single();
+        if (referrer) {
+            await supabaseAdmin
+                .from('profiles')
+                .update({ balance_tokens: (referrer.balance_tokens || 0) + REFERRAL_BONUS })
+                .eq('id', referrerId);
+            // Log bonus transaction
+            await supabaseAdmin.from('transactions').insert([{
+                user_id: referrerId,
+                amount_paid: 0,
+                tokens_received: REFERRAL_BONUS,
+                package_name: `REFERRAL_BONUS from ${userCode}`,
+                status: 'success',
+                payment_gateway_id: 'referral'
+            }]);
+        }
     }
 
     res.status(200).json({
@@ -99,9 +123,30 @@ async function getReferrerId(code: string): Promise<string | null> {
     const { data } = await supabase
         .from('profiles')
         .select('id')
-        .eq('user_code', code) // Look up by user_code (genz-xxxxx)
+        .eq('user_code', code)
         .single();
     return data?.id || null;
+}
+
+// Generate unique genz-XXXXX code (retry until no duplicate)
+async function generateUniqueCode(): Promise<string> {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    for (let attempt = 0; attempt < 10; attempt++) {
+        // 5 random alphanumeric chars
+        let suffix = '';
+        for (let i = 0; i < 5; i++) {
+            suffix += chars[Math.floor(Math.random() * chars.length)];
+        }
+        const code = `genz-${suffix}`;
+        const { data } = await supabaseAdmin
+            .from('profiles')
+            .select('id')
+            .eq('user_code', code)
+            .maybeSingle();
+        if (!data) return code; // unique
+    }
+    // Fallback: use timestamp-based suffix (virtually impossible to collide)
+    return `genz-${Date.now().toString(36).slice(-5)}`;
 }
 
 /**
@@ -290,6 +335,247 @@ router.post('/admin-login', async (req: Request, res: Response): Promise<void> =
     }
 
     res.status(401).json({ success: false, error: 'Invalid credentials' });
+});
+
+/**
+ * Search Users (Admin)
+ * GET /api/auth/search-users
+ */
+router.get('/search-users', async (req: Request, res: Response): Promise<void> => {
+    const { query } = req.query;
+    const authHeader = req.headers.authorization;
+
+    if (authHeader !== 'Bearer admin-secret-token') {
+        res.status(401).json({ success: false, error: 'Unauthorized Admin' });
+        return;
+    }
+
+    if (!query || typeof query !== 'string') {
+        // Allow empty query to fetch latest users
+        // res.status(400).json({ success: false, error: 'Query is required' });
+        // return;
+    }
+
+    try {
+        let queryBuilder = supabase
+            .from('profiles')
+            .select('id, email, full_name, user_code, balance_tokens');
+
+        if (query) {
+            let filter = `email.ilike.%${query}%,full_name.ilike.%${query}%,user_code.ilike.%${query}%`;
+            
+            // Only append id.eq if query is a valid UUID to avoid PostgreSQL errors
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (uuidRegex.test(query as string)) {
+                filter += `,id.eq.${query}`;
+            }
+            queryBuilder = queryBuilder.or(filter);
+        } else {
+            // Default sort if no query
+            queryBuilder = queryBuilder.order('created_at', { ascending: false });
+        }
+
+        const { data, error } = await queryBuilder.limit(50);
+
+        if (error) throw error;
+
+        res.status(200).json({ success: true, data });
+    } catch (err: any) {
+        console.error('Search Users Error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+/**
+ * User Transfer (P2P)
+ * POST /api/auth/transfer
+ */
+router.post('/transfer', async (req: Request, res: Response): Promise<void> => {
+    const { receiver_identifier, amount, message } = req.body;
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+    }
+
+    const token = authHeader.split(' ')[1];
+    
+    // Verify User
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+         res.status(401).json({ success: false, error: 'Invalid Token' });
+         return;
+    }
+
+    if (!receiver_identifier || !amount || amount <= 0) {
+        res.status(400).json({ success: false, error: 'Invalid input' });
+        return;
+    }
+
+    // Prevent self-transfer
+    if (receiver_identifier === user.id || receiver_identifier === user.email) {
+        res.status(400).json({ success: false, error: 'Cannot transfer to self' });
+        return;
+    }
+
+    try {
+        // 1. Get Sender Balance
+        const { data: sender, error: senderError } = await supabaseAdmin
+            .from('profiles')
+            .select('balance_tokens, full_name')
+            .eq('id', user.id)
+            .single();
+
+        if (senderError || !sender) throw new Error('Sender not found');
+        
+        if ((sender.balance_tokens || 0) < amount) {
+            res.status(400).json({ success: false, error: 'Insufficient balance' });
+            return;
+        }
+
+        // 2. Find Receiver
+        let filter = `user_code.eq.${receiver_identifier},email.eq.${receiver_identifier}`;
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidRegex.test(receiver_identifier)) {
+             filter += `,id.eq.${receiver_identifier}`;
+        }
+
+        const { data: receiver, error: receiverError } = await supabaseAdmin
+            .from('profiles')
+            .select('id, balance_tokens, user_code')
+            .or(filter)
+            .single();
+
+        if (receiverError || !receiver) {
+            res.status(404).json({ success: false, error: 'User tujuan tidak ditemukan' });
+            return;
+        }
+
+        // 3. Perform Transfer (Sequential with Compensation)
+        // A. Deduct from Sender
+        const { error: deductError } = await supabaseAdmin
+            .from('profiles')
+            .update({ balance_tokens: sender.balance_tokens - amount })
+            .eq('id', user.id);
+
+        if (deductError) throw deductError;
+
+        // B. Add to Receiver
+        const { error: addError } = await supabaseAdmin
+            .from('profiles')
+            .update({ balance_tokens: (receiver.balance_tokens || 0) + amount })
+            .eq('id', receiver.id);
+
+        if (addError) {
+            // Compensation: Refund Sender
+            await supabaseAdmin
+                .from('profiles')
+                .update({ balance_tokens: sender.balance_tokens })
+                .eq('id', user.id);
+            throw addError;
+        }
+
+        // 4. Log Transactions
+        // Outgoing for Sender
+        await supabaseAdmin.from('transactions').insert([{
+            user_id: user.id,
+            amount_paid: 0,
+            tokens_received: -amount, // Negative for sent
+            package_name: `TRANSFER_OUT to ${receiver.user_code}`,
+            status: 'success',
+            payment_gateway_id: 'p2p_transfer',
+            metadata: { receiver_id: receiver.id, message }
+        }]);
+
+        // Incoming for Receiver
+        await supabaseAdmin.from('transactions').insert([{
+            user_id: receiver.id,
+            amount_paid: 0,
+            tokens_received: amount,
+            package_name: `TRANSFER_IN from ${sender.full_name || 'User'}`,
+            status: 'success',
+            payment_gateway_id: 'p2p_transfer',
+            metadata: { sender_id: user.id, message }
+        }]);
+
+        res.status(200).json({ success: true, message: 'Transfer berhasil' });
+
+    } catch (err: any) {
+        console.error('Transfer Error:', err);
+        res.status(500).json({ success: false, error: err.message || 'Transfer failed' });
+    }
+});
+
+/**
+ * Admin Transfer (Top Up User)
+ * POST /api/auth/admin-transfer
+ */
+router.post('/admin-transfer', async (req: Request, res: Response): Promise<void> => {
+    const { receiver_identifier, amount } = req.body;
+    const authHeader = req.headers.authorization;
+
+    // 1. Verify Admin
+    if (authHeader !== 'Bearer admin-secret-token') {
+        res.status(401).json({ success: false, error: 'Unauthorized Admin' });
+        return;
+    }
+
+    if (!receiver_identifier || !amount || amount <= 0) {
+        res.status(400).json({ success: false, error: 'Invalid input' });
+        return;
+    }
+
+    try {
+        // 2. Find User by ID, Code, or Email
+        let filter = `user_code.eq.${receiver_identifier},email.eq.${receiver_identifier}`;
+        
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidRegex.test(receiver_identifier)) {
+             filter += `,id.eq.${receiver_identifier}`;
+        }
+
+        const { data: receiver, error: findError } = await supabaseAdmin
+            .from('profiles')
+            .select('id, balance_tokens, user_code')
+            .or(filter)
+            .single();
+
+        if (findError || !receiver) {
+            res.status(404).json({ success: false, error: 'User tujuan tidak ditemukan' });
+            return;
+        }
+
+        // 3. Add or Deduct Tokens (amount can be negative for deduction)
+        const delta = Number(amount);
+        const newBalance = Math.max(0, (receiver.balance_tokens || 0) + delta);
+        
+        const { error: updateError } = await supabaseAdmin
+            .from('profiles')
+            .update({ balance_tokens: newBalance })
+            .eq('id', receiver.id);
+
+        if (updateError) {
+            throw updateError;
+        }
+
+        // 4. Log Transaction (Optional but good for history)
+        await supabaseAdmin.from('transactions').insert([{
+            user_id: receiver.id,
+            amount_paid: 0,
+            tokens_received: amount,
+            package_name: 'ADMIN_GIFT',
+            status: 'success',
+            payment_gateway_id: 'admin_transfer'
+        }]);
+
+        res.status(200).json({ success: true, message: `Berhasil ${Number(amount) >= 0 ? 'mengirim' : 'mengurangi'} ${Math.abs(Number(amount))} token ke ${receiver.user_code || receiver.id}` });
+
+    } catch (err: any) {
+        console.error('Admin Transfer Error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 export default router

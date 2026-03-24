@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { useTokenStore } from '../store/useTokenStore';
 
 export const authorizedFetch = async (url: string, options: RequestInit = {}) => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -34,6 +35,11 @@ export const authorizedFetch = async (url: string, options: RequestInit = {}) =>
     ...options,
     headers
   });
+
+  // Always sync token balance for tool usage attempts (success or failure) to ensure UI consistency
+  if (url.includes('/api/tools/') && (options.method === 'POST' || options.method === 'post')) {
+      useTokenStore.getState().fetchBalance().catch(() => {});
+  }
 
   if (response.status === 401) {
     // throw new Error('Unauthorized'); // Allow 401 to pass if backend handles it gracefully or if it's not actually unauthorized

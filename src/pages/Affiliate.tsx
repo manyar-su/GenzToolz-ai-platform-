@@ -21,32 +21,61 @@ export default function Affiliate() {
   const { isLoggedIn, referralCode, affiliateStats } = useUserStore();
   const { showAlert } = useAlert();
   
-  // Simulated State for "Real-Time Tracker" (not yet in store)
-  const [clicks, setClicks] = useState(124); // Mock data
+  const [clicks, setClicks] = useState(0);
   const [referrals, setReferrals] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      // If not logged in, maybe redirect or show guest view
-      // For now, we'll just let them see the page but with "Login to see your stats"
-    }
+    if (!isLoggedIn) return;
 
-    // Mock Referrals Data
-    setReferrals([
-      { email: 'an***@gmail.com', status: 'joined', date: '2024-02-20' },
-      { email: 'bu***@yahoo.com', status: 'paid', date: '2024-02-19' },
-      { email: 'ci***@outlook.com', status: 'joined', date: '2024-02-18' },
-    ]);
+    // Load real referred users
+    const loadReferrals = async () => {
+      try {
+        const { supabase } = await import('../lib/supabase');
+        const { useUserStore: store } = await import('../store/useUserStore');
+        const userId = store.getState().id;
+        if (!userId) return;
+
+        const { data } = await supabase
+          .from('profiles')
+          .select('email, created_at')
+          .eq('referred_by', userId)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (data) {
+          setReferrals(data.map(u => ({
+            email: u.email ? u.email.replace(/(.{2}).*(@.*)/, '$1***$2') : 'user***',
+            status: 'joined',
+            date: new Date(u.created_at).toLocaleDateString('id-ID'),
+          })));
+        }
+
+        // Leaderboard: top referrers
+        const { data: lb } = await supabase
+          .from('profiles')
+          .select('full_name, balance_tokens')
+          .order('balance_tokens', { ascending: false })
+          .limit(5);
+
+        if (lb) setLeaderboard(lb);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    loadReferrals();
   }, [isLoggedIn]);
 
   const copyLink = () => {
-    const link = `https://genztools.com/profile?ref=${referralCode}`;
+    const link = `${window.location.origin}/profile?ref=${referralCode}`;
     navigator.clipboard.writeText(link);
     showAlert('Link affiliate berhasil disalin!', 'success');
   };
 
   const copyTemplate = (text: string) => {
-    const finalText = text.replace('[LINK]', `https://genztools.com/profile?ref=${referralCode}`);
+    const link = `${window.location.origin}/profile?ref=${referralCode}`;
+    const finalText = text.replace('[LINK]', link);
     navigator.clipboard.writeText(finalText);
     showAlert('Template promosi berhasil disalin!', 'success');
   };
@@ -152,7 +181,7 @@ export default function Affiliate() {
                             </div>
                             <div className="flex-1">
                                 <label className="mb-2 block text-xs font-bold uppercase text-gray-500">Link Otomatis</label>
-                                <div className="truncate text-sm text-gray-500 dark:text-gray-400">genztools.com/profile?ref={referralCode}</div>
+                                <div className="truncate text-sm text-gray-500 dark:text-gray-400">{window.location.host}/profile?ref={referralCode}</div>
                             </div>
                         </div>
                         <div className="flex gap-3">
@@ -255,26 +284,24 @@ export default function Affiliate() {
                     </div>
                     
                     <div className="space-y-4">
-                        {[
-                            { name: 'Rizky M.', points: '1,250 Token', rank: 1 },
-                            { name: 'Sarah A.', points: '980 Token', rank: 2 },
-                            { name: 'Dimas K.', points: '850 Token', rank: 3 },
-                            { name: 'Budi S.', points: '620 Token', rank: 4 },
-                            { name: 'Fani P.', points: '450 Token', rank: 5 },
-                        ].map((user) => (
-                            <div key={user.rank} className="flex items-center justify-between">
+                        {(leaderboard.length > 0 ? leaderboard : [
+                            { full_name: 'Rizky M.', balance_tokens: 1250 },
+                            { full_name: 'Sarah A.', balance_tokens: 980 },
+                            { full_name: 'Dimas K.', balance_tokens: 850 },
+                        ]).map((user, idx) => (
+                            <div key={idx} className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className={`flex h-8 w-8 items-center justify-center rounded-full font-bold text-white ${
-                                        user.rank === 1 ? 'bg-yellow-400' :
-                                        user.rank === 2 ? 'bg-gray-400' :
-                                        user.rank === 3 ? 'bg-orange-400' :
+                                        idx === 0 ? 'bg-yellow-400' :
+                                        idx === 1 ? 'bg-gray-400' :
+                                        idx === 2 ? 'bg-orange-400' :
                                         'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                                     }`}>
-                                        {user.rank}
+                                        {idx + 1}
                                     </div>
-                                    <span className="font-medium text-gray-900 dark:text-white">{user.name}</span>
+                                    <span className="font-medium text-gray-900 dark:text-white">{user.full_name}</span>
                                 </div>
-                                <span className="text-sm font-bold text-purple-600 dark:text-purple-400">{user.points}</span>
+                                <span className="text-sm font-bold text-purple-600 dark:text-purple-400">{user.balance_tokens} Token</span>
                             </div>
                         ))}
                     </div>

@@ -1,460 +1,180 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  FileText, 
-  TrendingUp, 
-  Image as ImageIcon, 
-  Download, 
-  Hash, 
-  Film, 
-  Music,
-  Lock,
-  Mic,
-  Zap,
-  Search,
-  MessageCircle,
-  Palette,
-  Eraser,
-  Calendar,
-  Link as LinkIcon,
-  Scissors
-} from 'lucide-react';
+import { Zap, TrendingUp, Coins, Users, ArrowRight, FileText, Wrench } from 'lucide-react';
+import { useUserStore } from '../store/useUserStore';
+import { useTokenStore } from '../store/useTokenStore';
+import { useHistoryStore } from '../store/useHistoryStore';
+import { useNotificationStore } from '../store/useNotificationStore';
+import OnboardingModal from '../components/OnboardingModal';
 
-const tools = [
-  // Teks
-  {
-    id: 'script-architect',
-    name: 'The Script Architect',
-    description: 'Buat naskah video dengan formula copywriting viral (AIDA/PAS).',
-    icon: FileText,
-    path: '/tools/script-architect',
-    available: true,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100',
-    category: 'teks',
-    badge: 'Terpopuler'
-  },
-  {
-    id: 'viral-hook-generator',
-    name: 'Viral Hook Generator',
-    description: 'Buat 10 hook viral untuk memancing perhatian dalam 3 detik pertama.',
-    icon: Zap,
-    path: '/tools/viral-hook-generator',
-    available: true,
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-100',
-    category: 'teks',
-    badge: 'Trending'
-  },
-  {
-    id: 'trend-analyzer',
-    name: 'Trend Analyzer',
-    description: 'Analisa topik trending untuk ide konten segar.',
-    icon: TrendingUp,
-    path: '/tools/trend-analyzer',
-    available: true,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100',
-    category: 'teks',
-    badge: 'Wajib Coba'
-  },
-  {
-    id: 'caption-generator',
-    name: 'Caption & Hashtag Generator',
-    description: 'Optimalkan metadata konten untuk masuk FYP/Explore.',
-    icon: Hash,
-    path: '/tools/caption-generator',
-    available: true,
-    color: 'text-pink-600',
-    bgColor: 'bg-pink-100',
-    category: 'teks',
-    badge: 'Favorit'
-  },
-  {
-    id: 'youtube-seo',
-    name: 'YouTube SEO Optimizer',
-    description: 'Judul clickbait aman dan tags ranking tinggi untuk YouTube.',
-    icon: Search,
-    path: '/tools/youtube-seo',
-    available: true,
-    color: 'text-red-600',
-    bgColor: 'bg-red-100',
-    category: 'teks',
-    badge: 'Baru'
-  },
-  {
-    id: 'video-to-short',
-    name: 'Video-to-Short Script',
-    description: 'Ubah video/teks panjang menjadi naskah video pendek.',
-    icon: Film,
-    path: '/tools/video-to-short',
-    available: true,
-    color: 'text-red-600',
-    bgColor: 'bg-red-100',
-    category: 'teks',
-    badge: null
-  },
-  {
-    id: 'comment-reply',
-    name: 'Comment Reply Automation',
-    description: 'Buat balasan interaktif untuk membangun komunitas.',
-    icon: MessageCircle,
-    path: '/tools/comment-reply',
-    available: true,
-    color: 'text-green-600',
-    bgColor: 'bg-green-100',
-    category: 'teks',
-    badge: 'Baru'
-  },
-  // Video / Utility
-  {
-    id: 'scheduler-suggestion',
-    name: 'Smart Post Scheduler',
-    description: 'Analisa waktu posting terbaik untuk jangkauan maksimal.',
-    icon: Calendar,
-    path: '/tools/scheduler-suggestion',
-    available: true,
-    color: 'text-cyan-600',
-    bgColor: 'bg-cyan-100',
-    category: 'video',
-    badge: 'Produktif'
-  },
-  {
-    id: 'smart-clipper',
-    name: 'AI Smart Video Clipper',
-    description: 'Potong video otomatis dengan deteksi highlight & auto-reframe.',
-    icon: Scissors,
-    path: '/tools/smart-clipper',
-    available: true,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100',
-    category: 'video',
-    badge: 'Premium'
-  },
-  {
-    id: 'link-in-bio',
-    name: 'Link-in-Bio Builder',
-    description: 'Buat halaman landing mini untuk link bio Anda.',
-    icon: LinkIcon,
-    path: '/tools/link-in-bio',
-    available: true,
-    color: 'text-violet-600',
-    bgColor: 'bg-violet-100',
-    category: 'video',
-    badge: 'Baru'
-  },
-  {
-    id: 'podcast-to-shorts',
-    name: 'Podcast-to-Shorts Converter',
-    description: 'Ubah transkrip podcast panjang menjadi 5 ide konten pendek viral.',
-    icon: Mic,
-    path: '/tools/podcast-to-shorts',
-    available: true,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-100',
-    category: 'teks',
-    badge: 'Canggih'
-  },
-  {
-    id: 'competitor-analyzer',
-    name: 'Competitor Content Analyzer',
-    description: 'Analisa strategi konten kompetitor untuk menangkan persaingan.',
-    icon: Search,
-    path: '/tools/competitor-analyzer',
-    available: true,
-    color: 'text-red-600',
-    bgColor: 'bg-red-100',
-    category: 'teks',
-    badge: 'Strategi'
-  },
-  {
-    id: 'subtitle-generator',
-    name: 'Automated Video Subtitle',
-    description: 'Generate subtitle otomatis gaya Gen-Z (Pop-up & Emoji).',
-    icon: FileText,
-    path: '/tools/subtitle-generator',
-    available: true,
-    color: 'text-cyan-600',
-    bgColor: 'bg-cyan-100',
-    category: 'video',
-    badge: 'Wajib'
-  },
-  {
-    id: 'brand-pitch',
-    name: 'Brand Deal Pitch Generator',
-    description: 'Buat surat penawaran profesional untuk endorsement brand.',
-    icon: FileText,
-    path: '/tools/brand-pitch',
-    available: true,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-100',
-    category: 'video',
-    badge: 'Cuan'
-  },
-  {
-    id: 'affiliate-hunter',
-    name: 'Affiliate Product Hunter',
-    description: 'Cari produk trending di marketplace yang cocok dengan niche Anda.',
-    icon: Search,
-    path: '/tools/affiliate-hunter',
-    available: true,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-100',
-    category: 'video',
-    badge: 'Cuan'
-  },
-  {
-    id: 'reply-master',
-    name: 'AI Reply Master',
-    description: 'Balas komentar otomatis dengan berbagai gaya bahasa (Sarkas/Santai).',
-    icon: MessageCircle,
-    path: '/tools/reply-master',
-    available: true,
-    color: 'text-pink-600',
-    bgColor: 'bg-pink-100',
-    category: 'teks',
-    badge: 'Baru'
-  },
-  {
-    id: 'giveaway-picker',
-    name: 'Giveaway Picker & Checker',
-    description: 'Undi pemenang giveaway secara adil dan transparan.',
-    icon: Zap,
-    path: '/tools/giveaway-picker',
-    available: true,
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-100',
-    category: 'video',
-    badge: null
-  },
-  {
-    id: 'poll-generator',
-    name: 'Community Poll Generator',
-    description: 'Ide pertanyaan polling provokatif untuk engagement Story.',
-    icon: MessageCircle,
-    path: '/tools/poll-generator',
-    available: true,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100',
-    category: 'teks',
-    badge: null
-  },
-  {
-    id: 'shadowban-checker',
-    name: 'Shadowban Checker',
-    description: 'Analisa kesehatan akun dan deteksi pembatasan jangkauan.',
-    icon: Search,
-    path: '/tools/shadowban-checker',
-    available: true,
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-100',
-    category: 'video',
-    badge: 'Penting'
-  },
-  {
-    id: 'bio-optimizer',
-    name: 'Profile Bio Optimizer',
-    description: 'Optimalkan bio profil agar lebih menjual dan profesional.',
-    icon: FileText,
-    path: '/tools/bio-optimizer',
-    available: true,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100',
-    category: 'teks',
-    badge: null
-  },
-  {
-    id: 'thumbnail-tester',
-    name: 'AI Thumbnail A/B Tester',
-    description: 'Simulasi prediksi performa dua desain thumbnail.',
-    icon: ImageIcon,
-    path: '/tools/thumbnail-tester',
-    available: true,
-    color: 'text-green-600',
-    bgColor: 'bg-green-100',
-    category: 'image',
-    badge: 'Pro'
-  },
-  {
-    id: 'color-grading',
-    name: 'Color Grading Suggester',
-    description: 'Rekomendasi setting warna video berdasarkan mood konten.',
-    icon: Palette,
-    path: '/tools/color-grading',
-    available: true,
-    color: 'text-rose-600',
-    bgColor: 'bg-rose-100',
-    category: 'image',
-    badge: null
-  },
-  // Voice
-  {
-    id: 'text-to-speech',
-    name: 'Text to Voice (Natural AI)',
-    description: 'Ubah teks menjadi suara voiceover natural untuk konten tanpa wajah.',
-    icon: Mic,
-    path: '/tools/text-to-speech',
-    available: true,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-100',
-    category: 'voice',
-    badge: 'Baru'
-  },
-  {
-    id: 'audio-visualizer',
-    name: 'Audio Visualizer',
-    description: 'Ubah audio/podcast menjadi video gelombang suara yang menarik.',
-    icon: Music,
-    path: '/tools/audio-visualizer',
-    available: true,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-100',
-    category: 'voice',
-    badge: null
-  },
-  // Image / Visual
-  {
-    id: 'color-palette',
-    name: 'AI Color Palette Designer',
-    description: 'Buat kombinasi warna estetik untuk branding Anda.',
-    icon: Palette,
-    path: '/tools/color-palette',
-    available: true,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-100',
-    category: 'image',
-    badge: 'Estetik'
-  },
-  {
-    id: 'text-to-visual',
-    name: 'Text-to-Visual',
-    description: 'Ubah teks menjadi gambar atau aset thumbnail.',
-    icon: ImageIcon,
-    path: '/tools/text-to-visual',
-    available: true,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-100',
-    category: 'image',
-    badge: 'Beta'
-  },
-  {
-    id: 'object-remover',
-    name: 'Photo Object Remover',
-    description: 'Hapus objek/orang yang tidak diinginkan dari foto.',
-    icon: Eraser,
-    path: '/tools/object-remover',
-    available: true,
-    color: 'text-rose-600',
-    bgColor: 'bg-rose-100',
-    category: 'image',
-    badge: 'Beta'
-  },
-  {
-    id: 'watermark-remover',
-    name: 'Watermark Remover',
-    description: 'Bersihkan gambar dengan menghapus watermark kecil.',
-    icon: Scissors,
-    path: '/tools/watermark-remover',
-    available: true,
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-100',
-    category: 'image',
-    badge: 'Beta'
-  },
-  {
-    id: 'all-in-one-downloader',
-    name: 'All-in-One Downloader',
-    description: 'Download video dari IG, TikTok, YouTube tanpa watermark.',
-    icon: Download,
-    path: '/tools/downloader',
-    available: true,
-    color: 'text-cyan-600',
-    bgColor: 'bg-cyan-100',
-    category: 'video',
-    badge: 'Beta'
-  }
+const FEATURED_TOOLS = [
+  { id: 'script-architect', name: 'Script Architect', desc: 'Naskah video viral', path: '/tools/script-architect', color: 'from-purple-500 to-indigo-500', badge: 'Terpopuler' },
+  { id: 'viral-hook-generator', name: 'Viral Hook Generator', desc: '10 hook dalam detik', path: '/tools/viral-hook-generator', color: 'from-yellow-500 to-orange-500', badge: 'Trending' },
+  { id: 'caption-generator', name: 'Caption & Hashtag', desc: 'Masuk FYP/Explore', path: '/tools/caption-generator', color: 'from-pink-500 to-rose-500', badge: 'Favorit' },
+  { id: 'trend-analyzer', name: 'Trend Analyzer', desc: 'Ide konten segar', path: '/tools/trend-analyzer', color: 'from-blue-500 to-cyan-500', badge: 'Wajib' },
+  { id: 'youtube-seo', name: 'YouTube SEO', desc: 'Ranking tinggi di YT', path: '/tools/youtube-seo', color: 'from-red-500 to-orange-500', badge: 'Baru' },
+  { id: 'text-to-speech', name: 'Text to Voice', desc: 'Voiceover natural AI', path: '/tools/text-to-speech', color: 'from-emerald-500 to-teal-500', badge: 'Baru' },
 ];
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { isLoggedIn, name, affiliateStats } = useUserStore();
+  const { tokens } = useTokenStore();
+  const { history } = useHistoryStore();
+  const { add: addNotif } = useNotificationStore();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
-  const categories = [
-    { id: 'teks', label: 'Text & Strategy Tools' },
-    { id: 'image', label: 'Visual & Branding Tools' },
-    { id: 'voice', label: 'Audio & Voice Tools' },
-    { id: 'video', label: 'Utility & Productivity Tools' },
-  ];
-
-  const getBadgeStyle = (text: string) => {
-    switch (text) {
-      case 'Terpopuler':
-      case 'Trending':
-        return 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30 animate-pulse';
-      case 'Baru':
-        return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
-      case 'Favorit':
-      case 'Wajib Coba':
-        return 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-md';
-      default:
-        return 'bg-blue-100 text-blue-700';
+  // Show onboarding for new users
+  useEffect(() => {
+    if (isLoggedIn) {
+      const seen = localStorage.getItem('genz_onboarding_done');
+      if (!seen) {
+        setShowOnboarding(true);
+        localStorage.setItem('genz_onboarding_done', '1');
+        // Welcome notification
+        addNotif({ title: 'Selamat datang! 🎉', message: `Halo ${name}! Kamu dapat 10 kredit gratis untuk mulai.`, type: 'success' });
+      }
     }
+  }, [isLoggedIn]);
+
+  // Low token warning
+  useEffect(() => {
+    if (isLoggedIn && tokens > 0 && tokens <= 3) {
+      addNotif({ title: 'Token hampir habis ⚠️', message: `Sisa ${tokens} token. Top up sekarang agar tidak terputus.`, type: 'warning' });
+    }
+  }, [tokens, isLoggedIn]);
+
+  const toolsUsed = history.length;
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Selamat pagi';
+    if (h < 17) return 'Selamat siang';
+    return 'Selamat malam';
   };
 
   return (
-    <div>
-      <div className="mb-8">
-        <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Creative Tools</h2>
-        <p className="text-gray-600 dark:text-gray-400">Semua yang Anda butuhkan untuk membuat konten viral.</p>
+    <div className="space-y-8">
+      {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
+
+      {/* Greeting */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {greeting()}, {isLoggedIn ? name : 'Creator'} 👋
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {isLoggedIn ? 'Siap bikin konten viral hari ini?' : 'Login untuk menyimpan hasil dan mendapat kredit gratis.'}
+          </p>
+        </div>
+        <button
+          onClick={() => navigate('/tools')}
+          className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:bg-blue-700 hover:scale-[1.02] self-start sm:self-auto"
+        >
+          <Wrench className="h-4 w-4" /> Semua Tools
+        </button>
       </div>
 
-      <div className="space-y-12">
-        {categories.map((category) => {
-          const categoryTools = tools.filter(t => t.category === category.id);
-          if (categoryTools.length === 0) return null;
+      {/* Stats Cards */}
+      {isLoggedIn && (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {[
+            { label: 'Sisa Token', value: tokens, icon: Coins, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', action: () => navigate('/topup') },
+            { label: 'Tools Dipakai', value: toolsUsed, icon: Wrench, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', action: () => navigate('/history') },
+            { label: 'Teman Diajak', value: affiliateStats.friendsJoined, icon: Users, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20', action: () => navigate('/affiliate') },
+            { label: 'Bonus Referral', value: affiliateStats.totalBonusEarned, icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20', action: () => navigate('/affiliate') },
+          ].map((stat, i) => (
+            <button
+              key={i}
+              onClick={stat.action}
+              className="flex flex-col gap-3 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg}`}>
+                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
 
-          return (
-            <div key={category.id}>
-              <h3 className="mb-4 text-lg font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                {category.label}
-              </h3>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {categoryTools.map((tool) => (
-                  <div 
-                    key={tool.id}
-                    onClick={() => tool.available && navigate(tool.path)}
-                    className={`group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-gray-800 dark:bg-gray-900 ${
-                      !tool.available ? 'cursor-not-allowed opacity-70 grayscale' : ''
-                    }`}
-                  >
-                    {tool.badge && (
-                      <div className={`absolute -right-2 -top-2 rounded-full px-3 py-1 text-xs font-bold ${getBadgeStyle(tool.badge)}`}>
-                        {tool.badge}
-                      </div>
-                    )}
-                    
-                    <div>
-                      <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${tool.bgColor} ${tool.color} transition-transform group-hover:scale-110`}>
-                        <tool.icon className="h-6 w-6" />
-                      </div>
-                      <h3 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">{tool.name}</h3>
-                      <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{tool.description}</p>
-                    </div>
-                    
-                    <div className="mt-6 flex items-center justify-between">
-                      {tool.available ? (
-                        <span className="text-sm font-semibold text-blue-600 group-hover:underline dark:text-blue-400">Coba Sekarang &rarr;</span>
-                      ) : (
-                        <div className="flex items-center text-xs font-medium text-gray-400">
-                          <Lock className="mr-1 h-3 w-3" /> Segera Hadir
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+      {/* Featured Tools */}
+      <div>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Tools Terpopuler</h2>
+          <button onClick={() => navigate('/tools')} className="flex items-center gap-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
+            Lihat semua <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURED_TOOLS.map(tool => (
+            <div
+              key={tool.id}
+              onClick={() => navigate(tool.path)}
+              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
+            >
+              <div className={`absolute inset-0 bg-gradient-to-br ${tool.color} opacity-0 transition-opacity group-hover:opacity-5`} />
+              <div className="flex items-start justify-between">
+                <div className={`rounded-xl bg-gradient-to-br ${tool.color} p-2.5`}>
+                  <Zap className="h-5 w-5 text-white" />
+                </div>
+                <span className="rounded-full bg-blue-100 dark:bg-blue-900/30 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-300">
+                  {tool.badge}
+                </span>
+              </div>
+              <h3 className="mt-3 font-bold text-gray-900 dark:text-white">{tool.name}</h3>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tool.desc}</p>
+              <div className="mt-3 flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:underline">
+                Coba Sekarang <ArrowRight className="h-3.5 w-3.5" />
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
+
+      {/* Recent History */}
+      {history.length > 0 && (
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Aktivitas Terakhir</h2>
+            <button onClick={() => navigate('/history')} className="flex items-center gap-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
+              Lihat semua <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {history.slice(0, 3).map(item => (
+              <div key={item.id} className="flex items-center gap-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3">
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+                  <FileText className="h-4 w-4 text-gray-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.toolName}</p>
+                  <p className="text-xs text-gray-400 truncate">{item.input?.slice(0, 60)}...</p>
+                </div>
+                <span className="text-xs text-gray-400 flex-shrink-0">
+                  {new Date(item.timestamp).toLocaleDateString('id-ID')}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CTA for guests */}
+      {!isLoggedIn && (
+        <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white text-center">
+          <h2 className="text-2xl font-bold mb-2">Daftar Gratis & Dapat 10 Kredit</h2>
+          <p className="text-blue-100 mb-6">Akses 30+ AI tools untuk content creator tanpa kartu kredit.</p>
+          <button
+            onClick={() => navigate('/profile')}
+            className="rounded-xl bg-white px-8 py-3 font-bold text-blue-600 transition hover:bg-blue-50"
+          >
+            Mulai Gratis Sekarang
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -74,7 +74,7 @@ export default function ScriptArchitect() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
       <div className="mx-auto max-w-4xl">
         <button 
           onClick={() => navigate('/')}
@@ -85,24 +85,24 @@ export default function ScriptArchitect() {
 
         <div className="grid gap-8 md:grid-cols-2">
           {/* Input Section */}
-          <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-            <h1 className="mb-2 text-2xl font-bold text-gray-900">The Script Architect</h1>
+          <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm ring-1 ring-gray-100 dark:ring-gray-700">
+            <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">The Script Architect</h1>
             
-            <div className="mb-6 rounded-lg bg-blue-50 p-4 text-sm text-blue-800">
+            <div className="mb-6 rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4 text-sm text-blue-800 dark:text-blue-300">
               <div className="flex items-start">
                 <Info className="mr-2 h-5 w-5 flex-shrink-0" />
                 <p>
                   <strong>Cara Penggunaan:</strong> Masukkan topik konten Anda, pilih platform, dan formula copywriting. 
                   AI akan membuatkan naskah video lengkap dengan hook yang menarik.
                   <br/>
-                  <span className="mt-2 block font-semibold text-blue-900">Biaya: 1 Token per generate.</span>
+                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-200">Biaya: 1 Token per generate.</span>
                 </p>
               </div>
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Topik / Ide Konten
                 </label>
                 <textarea
@@ -110,20 +110,20 @@ export default function ScriptArchitect() {
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="Contoh: Cara memulai freelance di tahun 2024..."
-                  className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 p-3 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={4}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Platform
                   </label>
                   <select
                     value={platform}
                     onChange={(e) => setPlatform(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-2.5 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-2.5 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="TikTok">TikTok</option>
                     <option value="Instagram Reels">Instagram Reels</option>
@@ -131,13 +131,13 @@ export default function ScriptArchitect() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Formula
                   </label>
                   <select
                     value={formula}
                     onChange={(e) => setFormula(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-2.5 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-2.5 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="AIDA">AIDA (Attention-Interest-Desire-Action)</option>
                     <option value="PAS">PAS (Problem-Agitation-Solution)</option>
@@ -162,9 +162,9 @@ export default function ScriptArchitect() {
           </div>
 
           {/* Output Section */}
-          <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+          <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm ring-1 ring-gray-100 dark:ring-gray-700">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Hasil Naskah</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Hasil Naskah</h2>
               {result && (
                 <div className="flex gap-2">
                   <button
@@ -185,7 +185,7 @@ export default function ScriptArchitect() {
               )}
             </div>
             
-            <div className="h-[400px] overflow-y-auto rounded-lg bg-gray-50 p-4 text-sm leading-relaxed text-gray-700">
+            <div className="h-[400px] overflow-y-auto rounded-lg bg-gray-50 dark:bg-gray-900 p-4 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
               {result ? (
                 <div className="whitespace-pre-wrap">{result}</div>
               ) : (

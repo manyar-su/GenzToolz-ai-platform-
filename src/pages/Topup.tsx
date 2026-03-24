@@ -1,10 +1,27 @@
 import { useUserStore } from "@/store/useUserStore";
-import { MessageCircle, Coins, CreditCard, Copy, Check } from "lucide-react";
+import { useTokenStore } from "@/store/useTokenStore";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import { MessageCircle, Coins, CreditCard, Copy, Check, Crown, Zap, Star } from "lucide-react";
 import { useState } from "react";
 
+const ONE_TIME = [
+  { name: 'Starter', total: 13, price: 'Rp 10.000', priceNum: 10000, bonus: 3, base: 10 },
+  { name: 'Creator', total: 65, price: 'Rp 50.000', priceNum: 50000, bonus: 15, base: 50, popular: true },
+  { name: 'Agency', total: 130, price: 'Rp 100.000', priceNum: 100000, bonus: 30, base: 100 },
+];
+
+const SUBSCRIPTIONS = [
+  { name: 'Basic', icon: Zap, tokens: 100, price: 'Rp 29.000/bln', color: 'from-blue-500 to-cyan-500', perks: ['100 token/bulan', 'Semua tools', 'Prioritas support'] },
+  { name: 'Pro', icon: Star, tokens: 300, price: 'Rp 79.000/bln', color: 'from-purple-500 to-indigo-500', popular: true, perks: ['300 token/bulan', 'Semua tools', 'Bonus referral 2x', 'Early access fitur baru'] },
+  { name: 'Creator+', icon: Crown, tokens: 1000, price: 'Rp 199.000/bln', color: 'from-yellow-500 to-orange-500', perks: ['1000 token/bulan', 'Semua tools', 'Bonus referral 3x', 'Custom branding', 'API access'] },
+];
+
 export default function Topup() {
-  const { id, tokens } = useUserStore();
+  const { id } = useUserStore();
+  const { tokens } = useTokenStore();
+  const { add: addNotif } = useNotificationStore();
   const [copied, setCopied] = useState(false);
+  const [tab, setTab] = useState<'topup' | 'subscription'>('topup');
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(id);
@@ -12,17 +29,16 @@ export default function Topup() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const packages = [
-    { name: 'Starter', total: 13, price: 'Rp 10.000', bonus: 3, base: 10 },
-    { name: 'Creator', total: 65, price: 'Rp 50.000', bonus: 15, base: 50, popular: true },
-    { name: 'Agency', total: 130, price: 'Rp 100.000', bonus: 30, base: 100 },
-  ];
+  const handleWhatsApp = (pkgName: string, pkgAmount: number, pkgPrice: string) => {
+    const message = `Halo Admin GenzTools, saya ingin Top Up Token.\n\nID User: ${id}\nPaket: ${pkgName}\nJumlah Token: ${pkgAmount}\nHarga: ${pkgPrice}\n\nMohon diproses. Terima kasih!`;
+    window.open(`https://wa.me/6281234567890?text=${encodeURIComponent(message)}`, '_blank');
+    addNotif({ title: 'Permintaan Top Up Dikirim', message: `Paket ${pkgName} (${pkgAmount} token) sedang diproses admin.`, type: 'info' });
+  };
 
-  const handleWhatsApp = (pkgAmount: number, pkgPrice: string) => {
-    const message = `Halo Admin GenzTools, saya ingin Top Up Token.\n\nID User: ${id}\nJumlah Token: ${pkgAmount}\nHarga: ${pkgPrice}\n\nMohon diproses segera. Terima kasih!`;
-    const encodedMessage = encodeURIComponent(message);
-    const phoneNumber = "6281234567890"; // Ganti dengan nomor WhatsApp Admin
-    window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+  const handleSubscription = (plan: typeof SUBSCRIPTIONS[0]) => {
+    const message = `Halo Admin GenzTools, saya ingin berlangganan paket ${plan.name}.\n\nID User: ${id}\nPaket: ${plan.name}\nHarga: ${plan.price}\n\nMohon diproses. Terima kasih!`;
+    window.open(`https://wa.me/6281234567890?text=${encodeURIComponent(message)}`, '_blank');
+    addNotif({ title: 'Permintaan Langganan Dikirim', message: `Paket ${plan.name} sedang diproses admin.`, type: 'info' });
   };
 
   return (

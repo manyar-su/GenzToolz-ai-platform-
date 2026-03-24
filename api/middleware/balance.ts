@@ -1,5 +1,5 @@
 import { type Response, type NextFunction } from 'express'
-import { supabase } from '../lib/supabase.js' // Fix import path extension if needed
+import { supabase, supabaseAdmin } from '../lib/supabase.js' // Fix import path extension if needed
 import { type AuthRequest } from './auth.js'
 
 // Middleware: Cek saldo tanpa potong (Logic Gate)
@@ -15,8 +15,14 @@ export const ensureBalance = async (req: AuthRequest, res: Response, next: NextF
     return
   }
 
+  // Admin Bypass (Unlimited Balance)
+  if (req.user.id === 'admin_user') {
+    next()
+    return
+  }
+
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('profiles')
       .select('balance_tokens')
       .eq('id', req.user.id)
@@ -53,15 +59,42 @@ export const deductToken = async (userId: string, amount: number = 1): Promise<b
   }
 
   try {
-    const { error } = await supabase.rpc('deduct_user_balance', {
+    // 1. Try RPC first (Atomic)
+    const { error } = await supabaseAdmin.rpc('deduct_user_balance', {
       user_id: userId,
       amount: amount
     })
 
-    if (error) {
-      console.error('Deduct Token Error:', error)
-      return false
+    if (!error) return true
+
+    console.warn('RPC deduct_user_balance failed, attempting manual fallback...', error.message)
+    
+    // 2. Fallback: Manual Transaction (Get -> Update)
+    // Note: Not atomic, but ensures functionality if RPC is missing
+    const { data: user, error: fetchError } = await supabaseAdmin
+        .from('profiles')
+        .select('balance_tokens')
+        .eq('id', userId)
+        .single()
+        
+    if (fetchError || !user) {
+        console.error('Fallback Fetch Error:', fetchError)
+        return false
     }
+    
+    const newBalance = user.balance_tokens - amount
+    if (newBalance < 0) return false // Should be caught by ensureBalance, but double check
+
+    const { error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({ balance_tokens: newBalance })
+        .eq('id', userId)
+    
+    if (updateError) {
+        console.error('Fallback Update Error:', updateError)
+        return false
+    }
+    
     return true
   } catch (error) {
     console.error('Deduct Token Exception:', error)

@@ -1,10 +1,46 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Trae Project</title>
+
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="GenzTools" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <!-- Primary Meta Tags -->
+    <title>GenzTools – Platform AI Tools untuk Content Creator</title>
+    <meta name="title" content="GenzTools – Platform AI Tools untuk Content Creator" />
+    <meta name="description" content="GenzTools adalah platform AI tools lengkap untuk content creator. Buat script viral, generate caption, analisis tren, subtitle otomatis, YouTube SEO, dan 30+ tools lainnya." />
+    <meta name="keywords" content="genztools, ai tools, content creator, script generator, caption generator, youtube seo, subtitle generator, viral hook, trend analyzer, video tools, social media tools" />
+    <meta name="author" content="GenzTools" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="Indonesian" />
+    <meta name="theme-color" content="#2563eb" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://genztools.vercel.app/" />
+    <meta property="og:title" content="GenzTools – Platform AI Tools untuk Content Creator" />
+    <meta property="og:description" content="Platform AI tools lengkap untuk content creator. Buat script viral, generate caption, analisis tren, subtitle otomatis, YouTube SEO, dan 30+ tools lainnya." />
+    <meta property="og:image" content="/favicon.svg" />
+    <meta property="og:site_name" content="GenzTools" />
+    <meta property="og:locale" content="id_ID" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://genztools.vercel.app/" />
+    <meta name="twitter:title" content="GenzTools – Platform AI Tools untuk Content Creator" />
+    <meta name="twitter:description" content="Platform AI tools lengkap untuk content creator. Buat script viral, generate caption, analisis tren, subtitle otomatis, YouTube SEO, dan 30+ tools lainnya." />
+    <meta name="twitter:image" content="/favicon.svg" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://genztools.vercel.app/" />
+
     <script type="module">
       if (import.meta.hot?.on) {
         import.meta.hot.on('vite:error', (error) => {
@@ -19,6 +55,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {})
+        })
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

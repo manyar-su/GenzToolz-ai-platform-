@@ -365,7 +365,10 @@ router.post('/script-architect', requireAuth, ensureBalance, async (req: Request
 
     const text = await generateOpenRouterText(prompt, modelName)
 
-    await deductToken((req as AuthRequest).user!.id)
+    const userId = (req as AuthRequest).user?.id
+    if (userId) {
+      await deductToken(userId)
+    }
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
@@ -830,9 +833,15 @@ router.post('/podcast-to-shorts', requireAuth, ensureBalance, async (req: Reques
 
     const text = await generateOpenRouterText(prompt, modelName)
 
+    const userId = (req as AuthRequest).user?.id
+    if (userId) {
+      await deductToken(userId)
+    }
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
+      // const userId = (req as AuthRequest).user?.id
+      // if (userId) await deductToken(userId)
       res.status(200).json({
         success: true,
         data: JSON.stringify([
@@ -1129,9 +1138,15 @@ router.post('/giveaway-picker', requireAuth, ensureBalance, async (req: Request,
 
     const text = await generateOpenRouterText(prompt, modelName)
 
+    const userId = (req as AuthRequest).user?.id
+    if (userId) {
+      await deductToken(userId)
+    }
     res.status(200).json({ success: true, data: text, model: modelName })
   } catch (error: any) {
     if (isQuotaError(error)) {
+      // const userId = (req as AuthRequest).user?.id
+      // if (userId) await deductToken(userId)
       res.status(200).json({
         success: true,
         data: JSON.stringify({
@@ -1455,7 +1470,10 @@ router.post('/smart-clipper/start', requireAuth, ensureBalance, async (req: Requ
     simulateVideoProcessing(jobId);
   }
 
-  await deductToken((req as AuthRequest).user!.id)
+  const userId = (req as AuthRequest).user?.id
+  if (userId) {
+    await deductToken(userId)
+  }
   res.status(200).json({ success: true, jobId, message: 'Video processing started' });
 });
 

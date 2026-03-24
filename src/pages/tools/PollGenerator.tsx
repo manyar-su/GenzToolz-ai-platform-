@@ -64,7 +64,7 @@ export default function PollGenerator() {
   };
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
       <div className="mx-auto max-w-4xl">
         <button 
           onClick={() => navigate('/')}

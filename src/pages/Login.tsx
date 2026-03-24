@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useUserStore } from '@/store/useUserStore';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Gift } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -64,10 +65,21 @@ export default function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl dark:bg-gray-800">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">GenzTools</h1>
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Selamat Datang Kembali</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Silakan login untuk melanjutkan</p>
+        </div>
+
+        {/* Info Banner */}
+        <div className="mb-6 flex items-start gap-3 rounded-xl bg-blue-50 border border-blue-200 p-4 dark:bg-blue-900/20 dark:border-blue-800">
+          <Gift className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">Dapatkan Kredit Gratis!</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+              Daftar akun baru dan dapatkan kredit token gratis untuk mencoba semua tools AI GenzTools.
+            </p>
+          </div>
         </div>
 
         {successMsg && (
@@ -107,13 +119,20 @@ export default function Login() {
              <div className="relative">
                 <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
-                className="w-full rounded-xl border border-gray-300 bg-white pl-10 pr-4 py-3 text-gray-900 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:focus:border-blue-400"
-                type="password"
+                className="w-full rounded-xl border border-gray-300 bg-white pl-10 pr-10 py-3 text-gray-900 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:focus:border-blue-400"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
             </div>
           </div>
 

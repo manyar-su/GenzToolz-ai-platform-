@@ -70,7 +70,7 @@ export default function VideoToShort() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
       <div className="mx-auto max-w-4xl">
         <button 
           onClick={() => navigate('/')}
@@ -81,24 +81,24 @@ export default function VideoToShort() {
 
         <div className="grid gap-8 md:grid-cols-2">
           {/* Input Section */}
-          <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-            <h1 className="mb-2 text-2xl font-bold text-gray-900">Video-to-Short Script</h1>
+          <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm ring-1 ring-gray-100 dark:ring-gray-700">
+            <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Video-to-Short Script</h1>
             
-            <div className="mb-6 rounded-lg bg-blue-50 p-4 text-sm text-blue-800">
+            <div className="mb-6 rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4 text-sm text-blue-800 dark:text-blue-300">
               <div className="flex items-start">
                 <Info className="mr-2 h-5 w-5 flex-shrink-0" />
                 <p>
                   <strong>Cara Penggunaan:</strong> Tempelkan transkrip video panjang, artikel, atau catatan blog Anda. 
                   AI akan meringkasnya menjadi naskah video pendek (Shorts/Reels) berdurasi 60 detik yang padat dan menarik.
                   <br/>
-                  <span className="mt-2 block font-semibold text-blue-900">Biaya: 1 Token per generate.</span>
+                  <span className="mt-2 block font-semibold text-blue-900 dark:text-blue-200">Biaya: 1 Token per generate.</span>
                 </p>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Konten Panjang / Transkrip
                 </label>
                 <textarea
@@ -106,7 +106,7 @@ export default function VideoToShort() {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Tempel teks Anda di sini..."
-                  className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 p-3 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={10}
                 />
               </div>
@@ -128,9 +128,9 @@ export default function VideoToShort() {
           </div>
 
           {/* Output Section */}
-          <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+          <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm ring-1 ring-gray-100 dark:ring-gray-700">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Naskah Shorts</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Naskah Shorts</h2>
               {result && (
                 <div className="flex gap-2">
                   <button
@@ -151,7 +151,7 @@ export default function VideoToShort() {
               )}
             </div>
             
-            <div className="h-[400px] overflow-y-auto rounded-lg bg-gray-50 p-4 text-sm leading-relaxed text-gray-700">
+            <div className="h-[400px] overflow-y-auto rounded-lg bg-gray-50 dark:bg-gray-900 p-4 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
               {result ? (
                 <div className="whitespace-pre-wrap">{result}</div>
               ) : (
