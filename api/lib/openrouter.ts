@@ -1,9 +1,10 @@
 // @ts-nocheck
 import dotenv from 'dotenv';
 
-dotenv.config();
+// dotenv hanya untuk local dev, di Vercel env vars sudah tersedia langsung
+try { dotenv.config(); } catch {}
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY || '';
 const SITE_URL = process.env.SITE_URL || 'http://localhost:3000';
 const SITE_NAME = process.env.SITE_NAME || 'GenZTools';
 
