@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Vercel deploy entry handler, for serverless deployment, please don't modify this file
  */

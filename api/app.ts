@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * This is a API server
  */

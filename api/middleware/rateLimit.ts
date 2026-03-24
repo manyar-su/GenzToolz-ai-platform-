@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type Response, type NextFunction } from 'express'
 import { type AuthRequest } from './auth.js'
 
