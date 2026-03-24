@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Trophy, Info, Shuffle, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useTokenStore } from '../../store/useTokenStore';
+import { authorizedFetch } from '../../lib/api-client';
 
 export default function GiveawayPicker() {
   const navigate = useNavigate();

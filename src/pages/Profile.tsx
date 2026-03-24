@@ -958,14 +958,3 @@ export default function Profile() {
   );
 }
 
-const updateTransactionStatus = async (transactionId: string, status: 'success' | 'failed', paymentGatewayId?: string) => {
-  const supabaseClient = getSupabaseServerClient()
-  const updatePayload: Record<string, any> = { status }
-  const primary = await supabaseClient
-    .from('transactions')
-    .update(updatePayload)
-    .eq('id', transactionId)
-    .select('id')
-    .single()
-  // ...
-}

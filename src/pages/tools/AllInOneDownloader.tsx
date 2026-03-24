@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, Download, Search, Youtube, AlertCircle, Video, Inst
 import { useTokenStore } from '../../store/useTokenStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useAlert } from '../../context/AlertContext';
+import { authorizedFetch } from '../../lib/api-client';
 
 export default function AllInOneDownloader() {
   const navigate = useNavigate();
