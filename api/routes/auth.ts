@@ -344,9 +344,9 @@ router.get('/search-users', async (req: Request, res: Response): Promise<void> =
     }
 
     try {
-        let queryBuilder = supabase
+        let queryBuilder = supabaseAdmin
             .from('profiles')
-            .select('id, email, full_name, user_code, balance_tokens');
+            .select('id, email, full_name, user_code, balance_tokens, created_at');
 
         if (query) {
             let filter = `email.ilike.%${query}%,full_name.ilike.%${query}%,user_code.ilike.%${query}%`;

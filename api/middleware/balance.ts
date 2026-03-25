@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { type Response, type NextFunction } from 'express'
-import { supabase, supabaseAdmin } from '../lib/supabase.js' // Fix import path extension if needed
+import { supabaseAdmin, hasAdminAccess } from '../lib/supabase.js'
 import { type AuthRequest } from './auth.js'
 
 // Token cost per tool — sinkron dengan TOKEN_COST di tools.ts
@@ -43,6 +43,13 @@ export const ensureBalance = async (req: AuthRequest, res: Response, next: NextF
     return
   }
 
+  // Bypass jika tidak ada service role key (anon key tidak bisa bypass RLS)
+  if (!hasAdminAccess) {
+    console.warn('[Balance] No SERVICE_ROLE_KEY — skipping balance check')
+    next()
+    return
+  }
+
   try {
     const { data, error } = await supabaseAdmin
       .from('profiles')
@@ -77,6 +84,12 @@ export const ensureBalance = async (req: AuthRequest, res: Response, next: NextF
 export const deductToken = async (userId: string, amount: number = 1): Promise<boolean> => {
   // Bypass deduction if using placeholder Supabase
   if (process.env.SUPABASE_URL?.includes('placeholder')) {
+    return true
+  }
+
+  // Bypass jika tidak ada service role key
+  if (!hasAdminAccess) {
+    console.warn('[Balance] No SERVICE_ROLE_KEY — skipping token deduction')
     return true
   }
 
