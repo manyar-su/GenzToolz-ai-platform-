@@ -1,4 +1,4 @@
-const CACHE = 'genztools-v3'
+const CACHE = 'genztools-v4'
 const STATIC = ['/', '/index.html', '/favicon.svg', '/manifest.json']
 
 self.addEventListener('install', e => {

@@ -8,6 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     persistSession: true,
     autoRefreshToken: true,
     storageKey: 'genztools-auth',
-    storage: window.localStorage,
+    // Jangan pass window.localStorage langsung — biarkan Supabase handle sendiri
+    // agar tidak crash saat module load di environment tanpa window
   }
 })
