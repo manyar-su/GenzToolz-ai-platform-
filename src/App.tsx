@@ -4,6 +4,7 @@ import { useEffect, Component, type ReactNode } from 'react';
 import { useUserStore } from "@/store/useUserStore";
 import Layout from "@/components/Layout";
 import SupabaseCheck from "@/components/SupabaseCheck";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import History from "@/pages/History";
@@ -42,6 +43,10 @@ import ColorGrading from "@/pages/tools/ColorGrading";
 import SmartVideoClipper from "@/pages/tools/SmartVideoClipper";
 import ObjectRemover from "@/pages/tools/ObjectRemover";
 import WatermarkRemover from "@/pages/tools/WatermarkRemover";
+import TikTokDownloader from "@/pages/tools/TikTokDownloader";
+import YouTubeMusicDownloader from "@/pages/tools/YouTubeMusicDownloader";
+import SpotifyDownloader from "@/pages/tools/SpotifyDownloader";
+import Downloader from "@/pages/Downloader";
 
 // Error Boundary
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: string }> {
@@ -86,8 +91,7 @@ export default function App() {
       <AlertProvider>
         <Router>
           <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
+          <Routes>            <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route path="/tools" element={<Tools />} />
           <Route path="/profile" element={<Profile />} />
@@ -133,11 +137,16 @@ export default function App() {
           
           <Route path="/affiliate" element={<Affiliate />} />
           <Route path="/topup" element={<Topup />} />
+          <Route path="/downloader" element={<Downloader />} />
+          <Route path="/tools/tiktok-downloader" element={<TikTokDownloader />} />
+          <Route path="/tools/youtube-music-downloader" element={<YouTubeMusicDownloader />} />
+          <Route path="/tools/spotify-downloader" element={<SpotifyDownloader />} />
           <Route path="/other" element={<div className="text-center text-xl">Other Page - Coming Soon</div>} />
         </Routes>
         </Layout>
-      </Router>
-    </AlertProvider>
+        </Router>
+        <PWAInstallPrompt />
+      </AlertProvider>
     </ErrorBoundary>
   );
 }

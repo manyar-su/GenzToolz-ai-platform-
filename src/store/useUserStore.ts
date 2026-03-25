@@ -44,11 +44,10 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
 
   initializeGuest: async () => {
-      // Restore session from Supabase client
+      // Restore session from Supabase client (persistent localStorage)
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
-          // Fetch profile data
           const { data: profile } = await supabase
               .from('profiles')
               .select('*')
@@ -65,11 +64,36 @@ export const useUserStore = create<UserState>((set, get) => ({
                   referralCode: profile.user_code || profile.referral_code,
                   referredBy: profile.referred_by,
               });
-              // Sync additional stats
               get().syncProfile();
               useTokenStore.getState().fetchBalance();
           }
       }
+
+      // Listen for auth state changes (token refresh, sign out from other tab, etc.)
+      supabase.auth.onAuthStateChange(async (event, session) => {
+          if (event === 'SIGNED_IN' && session?.user) {
+              const { data: profile } = await supabase
+                  .from('profiles').select('*').eq('id', session.user.id).single();
+              if (profile) {
+                  set({
+                      isLoggedIn: true,
+                      id: profile.id,
+                      name: profile.full_name,
+                      avatar: profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.full_name}`,
+                      email: profile.email,
+                      referralCode: profile.user_code || profile.referral_code,
+                      referredBy: profile.referred_by,
+                  });
+                  useTokenStore.getState().fetchBalance();
+              }
+          } else if (event === 'SIGNED_OUT') {
+              useTokenStore.getState().reset();
+              set({ isLoggedIn: false, id: '', name: 'Guest User', email: '', referralCode: '', referredBy: null });
+          } else if (event === 'TOKEN_REFRESHED') {
+              // Token refreshed silently — session still valid
+              useTokenStore.getState().fetchBalance();
+          }
+      });
   },
 
   login: async (email, password) => {

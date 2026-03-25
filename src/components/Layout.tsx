@@ -2,7 +2,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Menu, X, Moon, Sun, Coins,
-  User, History, Wrench, ChevronUp, ShieldCheck, Wallet
+  User, History, Wrench, ChevronUp, ShieldCheck, Wallet, Download
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useTokenStore } from '../store/useTokenStore';
@@ -46,6 +46,7 @@ export default function Layout({ children }: LayoutProps) {
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
     { icon: Wrench, label: 'Tools', path: '/tools' },
+    { icon: Download, label: 'Downloader', path: '/downloader' },
     { icon: History, label: 'Riwayat', path: '/history' },
     { icon: Users, label: 'Affiliate', path: '/affiliate' },
     { icon: Wallet, label: 'Top Up', path: '/topup' },
@@ -53,10 +54,11 @@ export default function Layout({ children }: LayoutProps) {
     ...(isAdmin ? [{ icon: ShieldCheck, label: 'Admin Panel', path: '/admin' }] : []),
   ];
 
-  const isActive = (path: string) =>
-    path === '/tools'
-      ? location.pathname === '/tools' || location.pathname.startsWith('/tools/')
-      : location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === '/tools') return location.pathname === '/tools';
+    if (path === '/downloader') return location.pathname === '/downloader' || location.pathname.startsWith('/tools/tiktok-downloader') || location.pathname.startsWith('/tools/youtube-music') || location.pathname.startsWith('/tools/spotify') || location.pathname.startsWith('/tools/downloader');
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
