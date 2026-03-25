@@ -1,4 +1,6 @@
 {
+  "outputDirectory": "dist",
+  "buildCommand": "vite build",
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -14,6 +16,5 @@
       "maxDuration": 30,
       "includeFiles": "api/**"
     }
-  },
-  "buildCommand": "vite build"
+  }
 }
