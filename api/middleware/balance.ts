@@ -43,6 +43,12 @@ export const ensureBalance = async (req: AuthRequest, res: Response, next: NextF
     return
   }
 
+  // Bypass: admin user (hardcoded, bukan UUID)
+  if (req.user.id === 'admin_user' || req.user.id === 'mock-user-id') {
+    next()
+    return
+  }
+
   // Bypass: guest user (tidak punya akun, tidak ada di profiles table)
   const isGuest = !!(req.headers['x-user-id'])
   if (isGuest) {
@@ -96,9 +102,8 @@ export const deductToken = async (userId: string, amount: number = 1): Promise<b
     return true
   }
 
-  // Bypass jika tidak ada service role key
-  if (!hasAdminAccess) {
-    console.warn('[Balance] No SERVICE_ROLE_KEY — skipping token deduction')
+  // Bypass: admin/mock user
+  if (userId === 'admin_user' || userId === 'mock-user-id') {
     return true
   }
 
