@@ -37,13 +37,20 @@ export const ensureBalance = async (req: AuthRequest, res: Response, next: NextF
     return
   }
 
-  // Bypass balance check if using placeholder Supabase
+  // Bypass: placeholder Supabase (dev mode)
   if (process.env.SUPABASE_URL?.includes('placeholder')) {
     next()
     return
   }
 
-  // Bypass jika tidak ada service role key (anon key tidak bisa bypass RLS)
+  // Bypass: guest user (tidak punya akun, tidak ada di profiles table)
+  const isGuest = !!(req.headers['x-user-id'])
+  if (isGuest) {
+    res.status(401).json({ success: false, error: 'Login diperlukan untuk menggunakan tools ini.' })
+    return
+  }
+
+  // Bypass: tidak ada service role key
   if (!hasAdminAccess) {
     console.warn('[Balance] No SERVICE_ROLE_KEY — skipping balance check')
     next()
@@ -58,8 +65,9 @@ export const ensureBalance = async (req: AuthRequest, res: Response, next: NextF
       .single()
 
     if (error || !data) {
-      console.error('Balance Check Error:', error)
-      res.status(500).json({ success: false, error: 'Gagal mengecek saldo' })
+      // Jika gagal query, jangan block user — log dan lanjutkan
+      console.error('Balance Check Error (non-blocking):', error?.message)
+      next()
       return
     }
 
@@ -75,8 +83,9 @@ export const ensureBalance = async (req: AuthRequest, res: Response, next: NextF
 
     next()
   } catch (error: any) {
-    console.error('Balance Check Exception:', error)
-    res.status(500).json({ success: false, error: 'Terjadi kesalahan sistem' })
+    // Jangan block user jika ada exception — log dan lanjutkan
+    console.error('Balance Check Exception (non-blocking):', error?.message)
+    next()
   }
 }
 

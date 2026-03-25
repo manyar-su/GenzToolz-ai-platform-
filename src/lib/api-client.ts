@@ -42,8 +42,7 @@ export const authorizedFetch = async (url: string, options: RequestInit = {}) =>
   }
 
   if (response.status === 401) {
-    // throw new Error('Unauthorized'); // Allow 401 to pass if backend handles it gracefully or if it's not actually unauthorized
-    console.warn('Unauthorized response from server');
+    throw new Error('Login diperlukan. Silakan masuk ke akun Anda terlebih dahulu.');
   }
 
   if (response.status === 402) {
