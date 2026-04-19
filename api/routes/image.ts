@@ -17,7 +17,7 @@ const runpodHeaders = () => ({
 /**
  * POST /api/image/upload
  * Upload gambar lokal ke Supabase Storage, return URL publik
- * Frontend kirim file sebagai base64 atau multipart
+ * Fallback: return base64 data URL jika Supabase tidak tersedia
  */
 router.post('/upload', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const { base64, filename = 'image.jpg', contentType = 'image/jpeg' } = req.body
@@ -27,20 +27,21 @@ router.post('/upload', requireAuth, async (req: Request, res: Response): Promise
     return
   }
 
+  const supabaseUrl = process.env.SUPABASE_URL || ''
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || ''
+
+  // Jika Supabase tidak dikonfigurasi, return base64 langsung
+  // RunPod juga support base64 image input
+  if (!supabaseUrl || supabaseUrl.includes('placeholder') || !serviceKey) {
+    res.status(200).json({ success: true, url: base64, type: 'base64' })
+    return
+  }
+
   try {
-    const supabaseUrl = process.env.SUPABASE_URL || ''
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || ''
-
-    if (!supabaseUrl || !serviceKey) {
-      res.status(500).json({ success: false, error: 'Supabase tidak dikonfigurasi' })
-      return
-    }
-
     // Decode base64 → Buffer
     const base64Data = base64.replace(/^data:image\/\w+;base64,/, '')
     const buffer = Buffer.from(base64Data, 'base64')
 
-    // Upload ke Supabase Storage bucket 'ai-images'
     const userId = (req as AuthRequest).user?.id || 'anonymous'
     const ext = contentType.split('/')[1] || 'jpg'
     const path = `uploads/${userId}/${Date.now()}.${ext}`
@@ -54,6 +55,7 @@ router.post('/upload', requireAuth, async (req: Request, res: Response): Promise
         'x-upsert': 'true',
       },
       body: buffer,
+      signal: AbortSignal.timeout(10000), // 10s timeout
     })
 
     if (!uploadRes.ok) {
@@ -61,12 +63,25 @@ router.post('/upload', requireAuth, async (req: Request, res: Response): Promise
       throw new Error(`Upload gagal: ${err}`)
     }
 
-    // Dapatkan URL publik
     const publicUrl = `${supabaseUrl}/storage/v1/object/public/ai-images/${path}`
-
-    res.status(200).json({ success: true, url: publicUrl })
+    res.status(200).json({ success: true, url: publicUrl, type: 'supabase' })
   } catch (error: any) {
-    console.error('Image Upload Error:', error)
+    console.error('Image Upload Error:', error.message)
+
+    // Fallback: jika Supabase tidak bisa diakses (DNS/network error), return base64
+    if (
+      error.code === 'ENOTFOUND' ||
+      error.code === 'ECONNREFUSED' ||
+      error.name === 'TimeoutError' ||
+      error.message?.includes('fetch failed') ||
+      error.cause?.code === 'ENOTFOUND' ||
+      error.cause?.code === 'ECONNREFUSED'
+    ) {
+      console.warn('[Upload] Supabase unreachable, falling back to base64')
+      res.status(200).json({ success: true, url: base64, type: 'base64' })
+      return
+    }
+
     res.status(500).json({ success: false, error: error.message || 'Gagal upload gambar' })
   }
 })
@@ -99,15 +114,20 @@ router.post('/generate', requireAuth, ensureBalance, async (req: Request, res: R
     }
 
     // seedream-v4-edit WAJIB ada images array
-    // Jika tidak ada gambar referensi, kirim array kosong tetap required oleh API
     if (Array.isArray(images) && images.length > 0) {
-      payload.input.images = images.filter(img => typeof img === 'string' && img.startsWith('http'))
+      // Filter: bisa URL publik ATAU base64 data URL
+      const validImages = images.filter(img =>
+        typeof img === 'string' && (img.startsWith('http') || img.startsWith('data:image'))
+      )
+      if (validImages.length === 0) {
+        res.status(400).json({ success: false, error: 'Gambar tidak valid. Gunakan URL publik atau upload ulang.' })
+        return
+      }
+      payload.input.images = validImages
     } else {
-      // Model edit butuh minimal 1 gambar — gunakan placeholder transparan 1x1 jika tidak ada
-      // Atau return error ke user
-      res.status(400).json({ 
-        success: false, 
-        error: 'Model Seedream v4 Edit membutuhkan minimal 1 gambar referensi. Upload foto yang ingin diedit.' 
+      res.status(400).json({
+        success: false,
+        error: 'Model Seedream v4 Edit membutuhkan minimal 1 gambar referensi.'
       })
       return
     }
