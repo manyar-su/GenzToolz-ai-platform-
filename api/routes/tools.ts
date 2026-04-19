@@ -2,13 +2,13 @@
 import { Router, type Request, type Response } from 'express'
 import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
-import { generateOpenRouterText } from '../lib/openrouter.js'
+import { generateOpenRouterText } from '../lib/ai.js'
 import { requireAuth, type AuthRequest } from '../middleware/auth.js'
 import { ensureBalance, deductToken } from '../middleware/balance.js'
 
 const router = Router()
-// Model berbayar — stabil, tidak kena rate limit free tier
-const DEFAULT_MODEL = 'meta-llama/llama-3.3-70b-instruct'
+// Model SumoPod — gratis 100% sampai 2026-04-19
+const DEFAULT_MODEL = 'mimo-v2-omni'
 const models = {
   writing: DEFAULT_MODEL,
   analyzer: DEFAULT_MODEL,

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+﻿import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, Download, Image as ImageIcon,
@@ -10,11 +10,11 @@ import { useTokenStore } from '../../store/useTokenStore';
 import { useAlert } from '../../context/AlertContext';
 
 const SIZE_OPTIONS = [
-  { label: '1024 × 1024 (1:1)', value: '1024*1024' },
-  { label: '1280 × 720 (16:9)', value: '1280*720' },
-  { label: '720 × 1280 (9:16)', value: '720*1280' },
-  { label: '1024 × 768 (4:3)', value: '1024*768' },
-  { label: '768 × 1024 (3:4)', value: '768*1024' },
+  { label: '1024 Ã— 1024 (1:1)', value: '1024*1024' },
+  { label: '1280 Ã— 720 (16:9)', value: '1280*720' },
+  { label: '720 Ã— 1280 (9:16)', value: '720*1280' },
+  { label: '1024 Ã— 768 (4:3)', value: '1024*768' },
+  { label: '768 Ã— 1024 (3:4)', value: '768*1024' },
 ];
 
 interface UploadedImage {
@@ -67,7 +67,7 @@ export default function TextToImage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Upload gambar ke backend → Supabase Storage → dapat URL publik
+  // Upload gambar ke backend â†’ Supabase Storage â†’ dapat URL publik
   const uploadImage = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -183,11 +183,6 @@ export default function TextToImage() {
     if (images.some(img => img.uploading)) { showAlert('Tunggu upload selesai', 'error'); return; }
     if (images.some(img => img.error)) { showAlert('Ada gambar yang gagal diupload', 'error'); return; }
 
-    if (!await deductToken(3)) {
-      showAlert('Token tidak cukup! Butuh 3 token.', 'error');
-      return;
-    }
-
     setResultUrl(null);
     setRawJson(null);
     setJobId(null);
@@ -240,52 +235,52 @@ export default function TextToImage() {
   const allUploaded = images.length > 0 && images.every(img => !img.uploading && !img.error && img.publicUrl);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0f0f0f] text-white">
+    <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
       {/* Top bar */}
-      <div className="flex h-12 items-center justify-between border-b border-white/10 px-4">
+      <div className="flex h-12 items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 bg-white dark:bg-gray-900">
         <button onClick={() => navigate('/')} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition">
           <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-purple-400" />
           <span className="text-sm font-semibold">Text to Image AI</span>
-          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-400">Seedream v4 Edit</span>
+          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">Seedream v4 Edit</span>
         </div>
         <div className="w-24" />
       </div>
 
       {/* Main split layout */}
       <div className="flex flex-1 overflow-hidden">
-        {/* ── LEFT PANEL: Input ── */}
-        <div className="flex w-full flex-col border-r border-white/10 lg:w-[480px] overflow-y-auto">
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
-            <span className="text-sm font-semibold text-white">Input</span>
-            <span className="text-xs text-gray-500">3 Token per generate</span>
+        {/* â”€â”€ LEFT PANEL: Input â”€â”€ */}
+        <div className="flex w-full flex-col border-r border-gray-200 dark:border-gray-700 lg:w-[480px] overflow-y-auto bg-white dark:bg-gray-800">
+          <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-2.5">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">Input</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">3 Token per generate</span>
           </div>
 
           <div className="flex-1 space-y-5 p-4">
             {/* Prompt */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-400">Prompt</label>
+              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-400">Prompt</label>
               <textarea
                 value={prompt}
                 onChange={e => setPrompt(e.target.value)}
                 rows={5}
                 placeholder="Describe what you want to create or edit..."
-                className="w-full resize-none rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white placeholder-gray-600 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                className="w-full resize-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
               />
             </div>
 
             {/* Image Upload */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-400">
+              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-400">
                 Images <span className="text-red-400">*</span>
-                <span className="ml-1 text-gray-600">(wajib, maks 3)</span>
+                <span className="ml-1 text-gray-600 dark:text-gray-400">(wajib, maks 3)</span>
               </label>
 
               {/* Uploaded images list */}
               {images.map((img, i) => (
-                <div key={i} className="mb-2 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div key={i} className="mb-2 flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-3 py-2">
                   <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded">
                     <img src={img.preview} alt="" className="h-full w-full object-cover" />
                   </div>
@@ -300,7 +295,7 @@ export default function TextToImage() {
                     {!img.uploading && !img.error && (
                       <div className="h-2 w-2 rounded-full bg-green-500" title="Uploaded" />
                     )}
-                    <button onClick={() => removeImage(i)} className="text-gray-500 hover:text-red-400 transition">
+                    <button onClick={() => removeImage(i)} className="text-gray-500 dark:text-gray-400 hover:text-red-400 transition">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -315,19 +310,19 @@ export default function TextToImage() {
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
                   className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-6 transition ${
-                    isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 hover:border-white/30 hover:bg-white/5'
+                    isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-gray-200 dark:border-gray-700 hover:border-white/30 hover:bg-gray-50 dark:bg-gray-700'
                   }`}
                 >
-                  <Plus className="h-5 w-5 text-gray-500" />
-                  <span className="text-xs text-gray-500">Add more files</span>
+                  <Plus className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Add more files</span>
                 </div>
               )}
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileInput} />
-              <p className="mt-1.5 text-xs text-gray-600">jpeg, jpg, png up to 16MB</p>
+              <p className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">jpeg, jpg, png up to 16MB</p>
             </div>
 
             {/* Additional Settings */}
-            <div className="rounded-lg border border-white/10">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700">
               <button
                 type="button"
                 onClick={() => setShowSettings(!showSettings)}
@@ -337,13 +332,13 @@ export default function TextToImage() {
                 {showSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
               {showSettings && (
-                <div className="border-t border-white/10 px-4 py-4 space-y-4">
+                <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-4 space-y-4">
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-400">Output Size</label>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-400">Output Size</label>
                     <select
                       value={size}
                       onChange={e => setSize(e.target.value)}
-                      className="w-full rounded-lg border border-white/10 bg-white/5 p-2.5 text-sm text-white focus:border-purple-500 focus:outline-none"
+                      className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 p-2.5 text-sm text-white focus:border-purple-500 focus:outline-none"
                     >
                       {SIZE_OPTIONS.map(opt => (
                         <option key={opt.value} value={opt.value} className="bg-gray-900">{opt.label}</option>
@@ -351,7 +346,7 @@ export default function TextToImage() {
                     </select>
                   </div>
                   <div className="flex items-center justify-between">
-                    <label className="text-xs text-gray-400">Safety Checker</label>
+                    <label className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">Safety Checker</label>
                     <button
                       type="button"
                       onClick={() => setSafetyChecker(!safetyChecker)}
@@ -365,18 +360,18 @@ export default function TextToImage() {
             </div>
 
             {/* Cost info */}
-            <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <span className="text-green-400">$</span>
               <span>An image generation will cost $0.0270 per request.</span>
             </div>
           </div>
 
           {/* Action buttons */}
-          <div className="border-t border-white/10 px-4 py-3 flex items-center justify-end gap-3">
+          <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-end gap-3">
             <button
               onClick={handleReset}
               disabled={isRunning}
-              className="rounded-lg border border-white/10 px-5 py-2 text-sm font-medium text-gray-400 hover:border-white/30 hover:text-white transition disabled:opacity-40"
+              className="rounded-lg border border-gray-200 dark:border-gray-700 px-5 py-2 text-sm font-medium text-gray-400 hover:border-white/30 hover:text-white transition disabled:opacity-40"
             >
               Reset
             </button>
@@ -391,35 +386,35 @@ export default function TextToImage() {
           </div>
         </div>
 
-        {/* ── RIGHT PANEL: Result ── */}
+        {/* â”€â”€ RIGHT PANEL: Result â”€â”€ */}
         <div className="flex flex-1 flex-col">
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
+          <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-2.5">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-white">Result</span>
-              <div className="flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1">
+              <div className="flex items-center gap-1.5 rounded-full bg-gray-50 dark:bg-gray-700 px-2.5 py-1">
                 <div className={`h-2 w-2 rounded-full ${STATUS_DOT[status]}`} />
-                <span className="text-xs text-gray-400">{STATUS_LABEL[status]}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">{STATUS_LABEL[status]}</span>
               </div>
             </div>
             {resultUrl && (
               <div className="flex items-center gap-2">
-                <div className="flex rounded-lg border border-white/10 overflow-hidden">
+                <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                   <button
                     onClick={() => setResultTab('preview')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'preview' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'preview' ? 'bg-white/10 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-white'}`}
                   >
                     <ImageIcon className="h-3.5 w-3.5" /> Preview
                   </button>
                   <button
                     onClick={() => setResultTab('json')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'json' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'json' ? 'bg-white/10 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-white'}`}
                   >
                     <FileImage className="h-3.5 w-3.5" /> JSON
                   </button>
                 </div>
                 <button
                   onClick={handleDownload}
-                  className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-400 hover:border-white/30 hover:text-white transition"
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs text-gray-400 hover:border-white/30 hover:text-white transition"
                 >
                   <Download className="h-3.5 w-3.5" /> Download image
                 </button>
@@ -444,14 +439,14 @@ export default function TextToImage() {
               </div>
             ) : resultUrl && resultTab === 'json' ? (
               <div className="w-full max-w-2xl">
-                <pre className="overflow-auto rounded-xl bg-white/5 p-4 text-xs text-green-400 max-h-[calc(100vh-160px)]">
+                <pre className="overflow-auto rounded-xl bg-gray-50 dark:bg-gray-700 p-4 text-xs text-green-400 max-h-[calc(100vh-160px)]">
                   {JSON.stringify(rawJson, null, 2)}
                 </pre>
               </div>
             ) : isRunning ? (
               <div className="flex flex-col items-center gap-6 text-center">
                 <div className="relative">
-                  <div className="h-20 w-20 rounded-full border-4 border-white/10" />
+                  <div className="h-20 w-20 rounded-full border-4 border-gray-200 dark:border-gray-700" />
                   <div className="absolute inset-0 h-20 w-20 animate-spin rounded-full border-4 border-transparent border-t-purple-500" />
                   <div className="absolute inset-3 flex items-center justify-center">
                     <Sparkles className="h-6 w-6 text-purple-400" />
@@ -459,8 +454,8 @@ export default function TextToImage() {
                 </div>
                 <div>
                   <p className="text-lg font-semibold text-white">{STATUS_LABEL[status]}</p>
-                  <p className="mt-1 text-sm text-gray-500">Biasanya 15–60 detik...</p>
-                  {jobId && <p className="mt-2 font-mono text-xs text-gray-600">Job: {jobId.substring(0, 20)}...</p>}
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Biasanya 15â€“60 detik...</p>
+                  {jobId && <p className="mt-2 font-mono text-xs text-gray-600 dark:text-gray-400">Job: {jobId.substring(0, 20)}...</p>}
                 </div>
                 <div className="w-64 overflow-hidden rounded-full bg-white/10">
                   <div
@@ -475,22 +470,22 @@ export default function TextToImage() {
                   <AlertCircle className="h-8 w-8 text-red-400" />
                 </div>
                 <p className="font-semibold text-white">Generation Failed</p>
-                <p className="text-sm text-gray-500">Coba lagi dengan prompt atau gambar berbeda</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Coba lagi dengan prompt atau gambar berbeda</p>
                 <button
                   onClick={() => setStatus('IDLE')}
-                  className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm text-gray-400 hover:text-white transition"
+                  className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm text-gray-400 hover:text-white transition"
                 >
                   <RefreshCw className="h-4 w-4" /> Coba Lagi
                 </button>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-4 text-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/5">
-                  <ImageIcon className="h-10 w-10 text-gray-600" />
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-700">
+                  <ImageIcon className="h-10 w-10 text-gray-600 dark:text-gray-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-400">Hasil gambar akan muncul di sini</p>
-                  <p className="mt-1 text-sm text-gray-600">Upload gambar dan klik Run untuk mulai</p>
+                  <p className="font-medium text-gray-500 dark:text-gray-400 dark:text-gray-400">Hasil gambar akan muncul di sini</p>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Upload gambar dan klik Run untuk mulai</p>
                 </div>
               </div>
             )}
@@ -510,3 +505,4 @@ export default function TextToImage() {
     </div>
   );
 }
+
