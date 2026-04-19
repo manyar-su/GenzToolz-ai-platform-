@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FileText, TrendingUp, Image as ImageIcon, Download, Hash, Film, Music,
-  Lock, Mic, Zap, Search, MessageCircle, Palette, Eraser, Calendar,
+  Lock, Mic, Zap, Search, MessageCircle, Palette, Eraser, Calendar, Sparkles,
   Link as LinkIcon, Scissors, X
 } from 'lucide-react';
 
@@ -26,6 +26,7 @@ const tools = [
   { id: 'color-grading', name: 'Color Grading Suggester', description: 'Rekomendasi setting warna video berdasarkan mood konten.', icon: Palette, path: '/tools/color-grading', color: 'text-rose-600', bgColor: 'bg-rose-100 dark:bg-rose-900/30', category: 'image', badge: null },
   { id: 'color-palette', name: 'AI Color Palette Designer', description: 'Buat kombinasi warna estetik untuk branding Anda.', icon: Palette, path: '/tools/color-palette', color: 'text-indigo-600', bgColor: 'bg-indigo-100 dark:bg-indigo-900/30', category: 'image', badge: 'Estetik' },
   { id: 'text-to-visual', name: 'Text-to-Visual', description: 'Ubah teks menjadi gambar atau aset thumbnail.', icon: ImageIcon, path: '/tools/text-to-visual', color: 'text-indigo-600', bgColor: 'bg-indigo-100 dark:bg-indigo-900/30', category: 'image', badge: 'Beta' },
+  { id: 'text-to-image', name: 'Text to Image AI', description: 'Generate gambar realistis dari teks menggunakan Seedream v4 AI.', icon: Sparkles, path: '/tools/text-to-image', color: 'text-purple-600', bgColor: 'bg-purple-100 dark:bg-purple-900/30', category: 'image', badge: 'Baru' },
   { id: 'object-remover', name: 'Photo Object Remover', description: 'Hapus objek/orang yang tidak diinginkan dari foto.', icon: Eraser, path: '/tools/object-remover', color: 'text-rose-600', bgColor: 'bg-rose-100 dark:bg-rose-900/30', category: 'image', badge: 'Beta' },
   { id: 'watermark-remover', name: 'Watermark Remover', description: 'Bersihkan gambar dengan menghapus watermark kecil.', icon: Scissors, path: '/tools/watermark-remover', color: 'text-gray-600', bgColor: 'bg-gray-100 dark:bg-gray-700', category: 'image', badge: 'Beta' },
   // Audio & Voice

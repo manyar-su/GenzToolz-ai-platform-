@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url'
 import authRoutes from './routes/auth.js'
 import toolRoutes from './routes/tools.js'
 import tiktokRoutes from './routes/tiktok.js'
+import imageRoutes from './routes/image.js'
 import { rateLimitTool } from './middleware/rateLimit.js'
 
 // for esm mode
@@ -32,6 +33,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 app.use('/api/auth', authRoutes)
 app.use('/api/tools', rateLimitTool, toolRoutes)
 app.use('/api/tiktok', rateLimitTool, tiktokRoutes)
+app.use('/api/image', rateLimitTool, imageRoutes)
 
 /**
  * health
