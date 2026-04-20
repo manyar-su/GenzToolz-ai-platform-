@@ -263,4 +263,197 @@ router.post('/upload-url', requireAuth, async (req: Request, res: Response): Pro
   }
 })
 
+/**
+ * POST /api/image/nano-banana/generate
+ * Submit job ke RunPod google-nano-banana-2-edit — GRATIS, tanpa deduct token
+ */
+router.post('/nano-banana/generate', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const { prompt, resolution = '1k', output_format = 'png', enable_safety_checker = true, image } = req.body
+
+  if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 3) {
+    res.status(400).json({ success: false, error: 'Prompt minimal 3 karakter' })
+    return
+  }
+
+  if (!RUNPOD_API_KEY) {
+    res.status(500).json({ success: false, error: 'RunPod API key tidak dikonfigurasi' })
+    return
+  }
+
+  try {
+    const input: Record<string, any> = {
+      prompt: prompt.trim(),
+      resolution,
+      output_format,
+      enable_safety_checker,
+    }
+
+    // Tambahkan gambar referensi jika ada
+    if (image && typeof image === 'string' && (image.startsWith('http') || image.startsWith('data:image'))) {
+      input.image = image
+    }
+
+    const response = await fetch('https://api.runpod.ai/v2/google-nano-banana-2-edit/run', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RUNPOD_API_KEY}`,
+      },
+      body: JSON.stringify({ input }),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data?.error || data?.message || `RunPod error: ${response.status}`)
+    }
+
+    const jobId = data?.id
+    if (!jobId) throw new Error('RunPod tidak mengembalikan job ID')
+
+    // Deduct 3 token setelah berhasil submit
+    const userId = (req as AuthRequest).user?.id
+    if (userId) {
+      await deductToken(userId, 3)
+    }
+    res.status(200).json({ success: true, jobId, status: data?.status || 'IN_QUEUE' })
+  } catch (error: any) {
+    console.error('Nano Banana Generate Error:', error)
+    res.status(500).json({ success: false, error: error.message || 'Gagal mengirim job' })
+  }
+})
+
+/**
+ * GET /api/image/nano-banana/status/:jobId
+ * Cek status job Nano Banana
+ */
+router.get('/nano-banana/status/:jobId', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const { jobId } = req.params
+
+  if (!RUNPOD_API_KEY) {
+    res.status(500).json({ success: false, error: 'RunPod API key tidak dikonfigurasi' })
+    return
+  }
+
+  try {
+    const response = await fetch(`https://api.runpod.ai/v2/google-nano-banana-2-edit/status/${jobId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RUNPOD_API_KEY}`,
+      },
+    })
+
+    const data = await response.json()
+    if (!response.ok) throw new Error(data?.error || `Status error: ${response.status}`)
+
+    const status = data?.status || 'UNKNOWN'
+    const output = data?.output
+
+    // Ekstrak URL gambar dari output
+    let imageUrl: string | null = null
+    if (output) {
+      if (typeof output === 'string' && output.startsWith('http')) {
+        imageUrl = output
+      } else if (Array.isArray(output) && output.length > 0) {
+        imageUrl = typeof output[0] === 'string' ? output[0] : output[0]?.url || output[0]?.image || null
+      } else if (typeof output === 'object') {
+        imageUrl = output?.result || output?.url || output?.image || output?.images?.[0] || null
+        if (!imageUrl) {
+          for (const val of Object.values(output)) {
+            if (typeof val === 'string' && val.startsWith('http')) { imageUrl = val; break; }
+          }
+        }
+      }
+    }
+
+    res.status(200).json({ success: true, status, imageUrl, raw: data })
+  } catch (error: any) {
+    console.error('Nano Banana Status Error:', error)
+    res.status(500).json({ success: false, error: error.message || 'Gagal cek status' })
+  }
+})
+
+/**
+ * POST /api/image/wan-i2v/generate
+ * Image to Video dengan WAN 2.1 — GRATIS tanpa token
+ */
+router.post('/wan-i2v/generate', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const {
+    prompt, image, negative_prompt = '', size = '1280*720',
+    duration = 5, num_inference_steps = 30, guidance = 5,
+    flow_shift = 5, seed = -1, enable_prompt_optimization = false,
+    enable_safety_checker = true
+  } = req.body
+
+  if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 3) {
+    res.status(400).json({ success: false, error: 'Prompt minimal 3 karakter' })
+    return
+  }
+  if (!image) {
+    res.status(400).json({ success: false, error: 'Image diperlukan' })
+    return
+  }
+  if (!RUNPOD_API_KEY) {
+    res.status(500).json({ success: false, error: 'RunPod API key tidak dikonfigurasi' })
+    return
+  }
+
+  try {
+    const response = await fetch('https://api.runpod.ai/v2/wan-2-1-i2v-720/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RUNPOD_API_KEY}` },
+      body: JSON.stringify({
+        input: {
+          prompt: prompt.trim(), image, negative_prompt, size,
+          duration, num_inference_steps, guidance, flow_shift,
+          seed, enable_prompt_optimization, enable_safety_checker
+        }
+      }),
+    })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data?.error || `RunPod error: ${response.status}`)
+    const jobId = data?.id
+    if (!jobId) throw new Error('RunPod tidak mengembalikan job ID')
+    // Deduct 3 token setelah berhasil submit
+    const userId = (req as AuthRequest).user?.id
+    if (userId) {
+      await deductToken(userId, 3)
+    }
+    res.status(200).json({ success: true, jobId, status: data?.status || 'IN_QUEUE' })
+  } catch (error: any) {
+    console.error('WAN I2V Generate Error:', error)
+    res.status(500).json({ success: false, error: error.message || 'Gagal mengirim job' })
+  }
+})
+
+/**
+ * GET /api/image/wan-i2v/status/:jobId
+ */
+router.get('/wan-i2v/status/:jobId', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const { jobId } = req.params
+  if (!RUNPOD_API_KEY) { res.status(500).json({ success: false, error: 'RunPod API key tidak dikonfigurasi' }); return }
+  try {
+    const response = await fetch(`https://api.runpod.ai/v2/wan-2-1-i2v-720/status/${jobId}`, {
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RUNPOD_API_KEY}` },
+    })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data?.error || `Status error: ${response.status}`)
+    const status = data?.status || 'UNKNOWN'
+    const output = data?.output
+    let videoUrl: string | null = null
+    if (output) {
+      if (typeof output === 'string' && (output.startsWith('http') || output.startsWith('data:'))) videoUrl = output
+      else if (Array.isArray(output) && output.length > 0) videoUrl = typeof output[0] === 'string' ? output[0] : output[0]?.url || null
+      else if (typeof output === 'object') {
+        videoUrl = output?.video || output?.result || output?.url || output?.video_url || null
+        if (!videoUrl) for (const val of Object.values(output)) { if (typeof val === 'string' && val.startsWith('http')) { videoUrl = val; break; } }
+      }
+    }
+    res.status(200).json({ success: true, status, videoUrl, raw: data })
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Gagal cek status' })
+  }
+})
+
 export default router

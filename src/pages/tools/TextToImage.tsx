@@ -10,11 +10,11 @@ import { useTokenStore } from '../../store/useTokenStore';
 import { useAlert } from '../../context/AlertContext';
 
 const SIZE_OPTIONS = [
-  { label: '1024 Ã— 1024 (1:1)', value: '1024*1024' },
-  { label: '1280 Ã— 720 (16:9)', value: '1280*720' },
-  { label: '720 Ã— 1280 (9:16)', value: '720*1280' },
-  { label: '1024 Ã— 768 (4:3)', value: '1024*768' },
-  { label: '768 Ã— 1024 (3:4)', value: '768*1024' },
+  { label: '1024 × 1024 (1:1)', value: '1024*1024', ratio: '1/1', ratioLabel: '1:1' },
+  { label: '1280 × 720 (16:9)', value: '1280*720', ratio: '16/9', ratioLabel: '16:9' },
+  { label: '720 × 1280 (9:16)', value: '720*1280', ratio: '9/16', ratioLabel: '9:16' },
+  { label: '1024 × 768 (4:3)', value: '1024*768', ratio: '4/3', ratioLabel: '4:3' },
+  { label: '768 × 1024 (3:4)', value: '768*1024', ratio: '3/4', ratioLabel: '3:4' },
 ];
 
 interface UploadedImage {
@@ -221,30 +221,48 @@ export default function TextToImage() {
   const handleDownload = async () => {
     if (!resultUrl) return;
     try {
-      const res = await fetch(resultUrl);
+      // Fetch via proxy backend agar CORS tidak block
+      const res = await fetch(resultUrl, { mode: 'cors' });
+      if (!res.ok) throw new Error('fetch failed');
       const blob = await res.blob();
+      const ext = blob.type.includes('png') ? 'png' : 'jpg';
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `genztools-${Date.now()}.jpg`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-    } catch { window.open(resultUrl, '_blank'); }
+      a.download = `vertex-image-${Date.now()}.${ext}`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      }, 100);
+    } catch {
+      // Fallback: buat link dengan download attribute
+      const a = document.createElement('a');
+      a.href = resultUrl;
+      a.download = `vertex-image-${Date.now()}.jpg`;
+      a.target = '_self'; // jangan buka tab baru
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 100);
+    }
   };
 
   const isRunning = status === 'UPLOADING' || status === 'SUBMITTING' || status === 'IN_QUEUE' || status === 'IN_PROGRESS';
   const allUploaded = images.length > 0 && images.every(img => !img.uploading && !img.error && img.publicUrl);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
+    <div className="flex min-h-screen flex-col bg-[#0a0a0a] text-white">
       {/* Top bar */}
-      <div className="flex h-12 items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 bg-white dark:bg-gray-900">
+      <div className="flex h-12 items-center justify-between border-b border-white/[0.06] px-4 bg-[#111]">
         <button onClick={() => navigate('/')} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition">
           <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-purple-400" />
-          <span className="text-sm font-semibold">Text to Image AI</span>
-          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">Seedream v4 Edit</span>
+          <span className="text-sm font-semibold">Image to Image AI</span>
+          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-400">Seedream v4 Edit</span>
         </div>
         <div className="w-24" />
       </div>
@@ -252,35 +270,45 @@ export default function TextToImage() {
       {/* Main split layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* â”€â”€ LEFT PANEL: Input â”€â”€ */}
-        <div className="flex w-full flex-col border-r border-gray-200 dark:border-gray-700 lg:w-[480px] overflow-y-auto bg-white dark:bg-gray-800">
-          <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-2.5">
-            <span className="text-sm font-semibold text-gray-900 dark:text-white">Input</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">3 Token per generate</span>
+        <div className="flex w-full flex-col border-r border-white/[0.06] lg:w-[480px] overflow-y-auto bg-[#111]">
+          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
+            <span className="text-sm font-semibold text-white">Input</span>
+            <span className="text-xs text-gray-400">3 Token per generate</span>
           </div>
 
           <div className="flex-1 space-y-5 p-4">
             {/* Prompt */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-400">Prompt</label>
+              <label className="mb-1.5 block text-xs font-medium text-gray-400">Prompt</label>
               <textarea
                 value={prompt}
-                onChange={e => setPrompt(e.target.value)}
-                rows={5}
+                onChange={e => {
+                  setPrompt(e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+                }}
+                ref={el => {
+                  if (el) {
+                    el.style.height = 'auto';
+                    el.style.height = el.scrollHeight + 'px';
+                  }
+                }}
                 placeholder="Describe what you want to create or edit..."
-                className="w-full resize-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                className="w-full resize-none overflow-hidden rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 min-h-[80px]"
+                style={{ height: 'auto' }}
               />
             </div>
 
             {/* Image Upload */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-400">
+              <label className="mb-1.5 block text-xs font-medium text-gray-400 dark:text-gray-400">
                 Images <span className="text-red-400">*</span>
-                <span className="ml-1 text-gray-600 dark:text-gray-400">(wajib, maks 3)</span>
+                <span className="ml-1 text-gray-400">(wajib, maks 3)</span>
               </label>
 
               {/* Uploaded images list */}
               {images.map((img, i) => (
-                <div key={i} className="mb-2 flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-3 py-2">
+                <div key={i} className="mb-2 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
                   <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded">
                     <img src={img.preview} alt="" className="h-full w-full object-cover" />
                   </div>
@@ -295,7 +323,7 @@ export default function TextToImage() {
                     {!img.uploading && !img.error && (
                       <div className="h-2 w-2 rounded-full bg-green-500" title="Uploaded" />
                     )}
-                    <button onClick={() => removeImage(i)} className="text-gray-500 dark:text-gray-400 hover:text-red-400 transition">
+                    <button onClick={() => removeImage(i)} className="text-gray-400 hover:text-red-400 transition">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -310,19 +338,19 @@ export default function TextToImage() {
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
                   className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-6 transition ${
-                    isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-gray-200 dark:border-gray-700 hover:border-white/30 hover:bg-gray-50 dark:bg-gray-700'
+                    isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 hover:border-white/20 hover:bg-white/5'
                   }`}
                 >
-                  <Plus className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Add more files</span>
+                  <Plus className="h-5 w-5 text-gray-400" />
+                  <span className="text-xs text-gray-400">Add more files</span>
                 </div>
               )}
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileInput} />
-              <p className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">jpeg, jpg, png up to 16MB</p>
+              <p className="mt-1.5 text-xs text-gray-400">jpeg, jpg, png up to 16MB</p>
             </div>
 
             {/* Additional Settings */}
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="rounded-lg border border-white/10">
               <button
                 type="button"
                 onClick={() => setShowSettings(!showSettings)}
@@ -334,19 +362,42 @@ export default function TextToImage() {
               {showSettings && (
                 <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-4 space-y-4">
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-400">Output Size</label>
-                    <select
-                      value={size}
-                      onChange={e => setSize(e.target.value)}
-                      className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 p-2.5 text-sm text-white focus:border-purple-500 focus:outline-none"
-                    >
-                      {SIZE_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value} className="bg-gray-900">{opt.label}</option>
-                      ))}
-                    </select>
+                    <label className="mb-2 block text-xs font-medium text-gray-400">Output Size</label>
+                    <div className="flex gap-2">
+                      {SIZE_OPTIONS.map(opt => {
+                        const [w, h] = opt.ratio.split('/').map(Number);
+                        const isSelected = size === opt.value;
+                        // Normalize box dimensions: max 32px on longest side
+                        const maxPx = 32;
+                        const boxW = w >= h ? maxPx : Math.round((w / h) * maxPx);
+                        const boxH = h >= w ? maxPx : Math.round((h / w) * maxPx);
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setSize(opt.value)}
+                            title={opt.label}
+                            className={`flex flex-1 flex-col items-center gap-1.5 rounded-lg border py-2 px-1 transition-all ${
+                              isSelected
+                                ? 'border-purple-500 bg-purple-500/20 text-purple-300'
+                                : 'border-gray-600 bg-gray-700/50 text-gray-400 hover:border-purple-400 hover:text-purple-300'
+                            }`}
+                          >
+                            <div className="flex items-center justify-center" style={{ width: maxPx, height: maxPx }}>
+                              <div
+                                className={`rounded-sm border-2 ${isSelected ? 'border-purple-400 bg-purple-500/30' : 'border-gray-400 bg-gray-600/50'}`}
+                                style={{ width: boxW, height: boxH }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-semibold leading-none">{opt.ratioLabel}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-1.5 text-xs text-gray-500">{SIZE_OPTIONS.find(o => o.value === size)?.label}</p>
                   </div>
                   <div className="flex items-center justify-between">
-                    <label className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">Safety Checker</label>
+                    <label className="text-xs text-gray-400 dark:text-gray-400">Safety Checker</label>
                     <button
                       type="button"
                       onClick={() => setSafetyChecker(!safetyChecker)}
@@ -358,12 +409,6 @@ export default function TextToImage() {
                 </div>
               )}
             </div>
-
-            {/* Cost info */}
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <span className="text-green-400">$</span>
-              <span>An image generation will cost $0.0270 per request.</span>
-            </div>
           </div>
 
           {/* Action buttons */}
@@ -371,7 +416,7 @@ export default function TextToImage() {
             <button
               onClick={handleReset}
               disabled={isRunning}
-              className="rounded-lg border border-gray-200 dark:border-gray-700 px-5 py-2 text-sm font-medium text-gray-400 hover:border-white/30 hover:text-white transition disabled:opacity-40"
+              className="rounded-lg border border-white/10 px-5 py-2 text-sm font-medium text-gray-400 hover:border-white/30 hover:text-white transition disabled:opacity-40"
             >
               Reset
             </button>
@@ -388,33 +433,33 @@ export default function TextToImage() {
 
         {/* â”€â”€ RIGHT PANEL: Result â”€â”€ */}
         <div className="flex flex-1 flex-col">
-          <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-2.5">
+          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-white">Result</span>
-              <div className="flex items-center gap-1.5 rounded-full bg-gray-50 dark:bg-gray-700 px-2.5 py-1">
+              <div className="flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1">
                 <div className={`h-2 w-2 rounded-full ${STATUS_DOT[status]}`} />
-                <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">{STATUS_LABEL[status]}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-400">{STATUS_LABEL[status]}</span>
               </div>
             </div>
             {resultUrl && (
               <div className="flex items-center gap-2">
-                <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="flex rounded-lg border border-white/10 overflow-hidden">
                   <button
                     onClick={() => setResultTab('preview')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'preview' ? 'bg-white/10 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-white'}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'preview' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
                   >
                     <ImageIcon className="h-3.5 w-3.5" /> Preview
                   </button>
                   <button
                     onClick={() => setResultTab('json')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'json' ? 'bg-white/10 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-white'}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'json' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
                   >
                     <FileImage className="h-3.5 w-3.5" /> JSON
                   </button>
                 </div>
                 <button
                   onClick={handleDownload}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs text-gray-400 hover:border-white/30 hover:text-white transition"
+                  className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-400 hover:border-white/30 hover:text-white transition"
                 >
                   <Download className="h-3.5 w-3.5" /> Download image
                 </button>
@@ -439,7 +484,7 @@ export default function TextToImage() {
               </div>
             ) : resultUrl && resultTab === 'json' ? (
               <div className="w-full max-w-2xl">
-                <pre className="overflow-auto rounded-xl bg-gray-50 dark:bg-gray-700 p-4 text-xs text-green-400 max-h-[calc(100vh-160px)]">
+                <pre className="overflow-auto rounded-xl bg-white/5 p-4 text-xs text-green-400 max-h-[calc(100vh-160px)]">
                   {JSON.stringify(rawJson, null, 2)}
                 </pre>
               </div>
@@ -454,9 +499,8 @@ export default function TextToImage() {
                 </div>
                 <div>
                   <p className="text-lg font-semibold text-white">{STATUS_LABEL[status]}</p>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Biasanya 15â€“60 detik...</p>
-                  {jobId && <p className="mt-2 font-mono text-xs text-gray-600 dark:text-gray-400">Job: {jobId.substring(0, 20)}...</p>}
-                </div>
+                  <p className="mt-1 text-sm text-gray-400">Biasanya 15–60 detik, harap tunggu...</p>
+</div>
                 <div className="w-64 overflow-hidden rounded-full bg-white/10">
                   <div
                     className="h-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-1000"
@@ -470,22 +514,28 @@ export default function TextToImage() {
                   <AlertCircle className="h-8 w-8 text-red-400" />
                 </div>
                 <p className="font-semibold text-white">Generation Failed</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Coba lagi dengan prompt atau gambar berbeda</p>
+                <p className="text-sm text-gray-400">Coba lagi dengan prompt atau gambar berbeda</p>
                 <button
                   onClick={() => setStatus('IDLE')}
-                  className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm text-gray-400 hover:text-white transition"
+                  className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm text-gray-400 hover:text-white transition"
                 >
                   <RefreshCw className="h-4 w-4" /> Coba Lagi
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-4 text-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-700">
-                  <ImageIcon className="h-10 w-10 text-gray-600 dark:text-gray-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-500 dark:text-gray-400 dark:text-gray-400">Hasil gambar akan muncul di sini</p>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Upload gambar dan klik Run untuk mulai</p>
+              <div className="relative flex flex-col items-center justify-center h-full">
+                {/* Preview image sebagai background hint */}
+                <div className="relative w-full max-w-lg overflow-hidden rounded-2xl">
+                  <img
+                    src="https://image.runpod.ai/preview/bytedance/seedream-v4-edit.png"
+                    alt="Contoh hasil Image to Image"
+                    className="w-full object-cover opacity-60 rounded-2xl"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent rounded-2xl" />
+                  <div className="absolute bottom-0 left-0 right-0 p-5 text-center">
+                    <p className="text-sm font-semibold text-white mb-1">Contoh hasil Image to Image</p>
+                    <p className="text-xs text-gray-300">Upload gambar referensi + tulis prompt → klik Run</p>
+                  </div>
                 </div>
               </div>
             )}

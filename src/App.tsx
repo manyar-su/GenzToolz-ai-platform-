@@ -48,6 +48,8 @@ import YouTubeMusicDownloader from "@/pages/tools/YouTubeMusicDownloader";
 import SpotifyDownloader from "@/pages/tools/SpotifyDownloader";
 import Downloader from "@/pages/Downloader";
 import TextToImage from "@/pages/tools/TextToImage";
+import NanaBananaEdit from "@/pages/tools/NanaBananaEdit";
+import WanI2V from "@/pages/tools/WanI2V";
 
 // Error Boundary
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: string }> {
@@ -143,6 +145,8 @@ export default function App() {
           <Route path="/tools/youtube-music-downloader" element={<YouTubeMusicDownloader />} />
           <Route path="/tools/spotify-downloader" element={<SpotifyDownloader />} />
           <Route path="/tools/text-to-image" element={<TextToImage />} />
+          <Route path="/tools/nano-banana-edit" element={<NanaBananaEdit />} />
+          <Route path="/tools/wan-i2v" element={<WanI2V />} />
           <Route path="/other" element={<div className="text-center text-xl">Other Page - Coming Soon</div>} />
         </Routes>
         </Layout>
