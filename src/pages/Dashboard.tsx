@@ -35,6 +35,15 @@ const FEATURED_TOOLS = [
     preview: 'https://image.runpod.ai/preview/bytedance/seedream-v4-edit.png',
   },
   {
+    id: 'node-marketing-terminal',
+    name: 'Node Marketing Terminal',
+    desc: 'Workflow node ala n8n + ComfyUI untuk iklan AI end-to-end',
+    path: '/tools/node-marketing-terminal',
+    color: 'from-indigo-600 to-blue-600',
+    badge: 'Baru',
+    preview: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=80',
+  },
+  {
     id: 'script-architect',
     name: 'Script Architect',
     desc: 'Naskah video viral dengan formula AIDA/PAS',
@@ -296,10 +305,10 @@ export default function Dashboard() {
               <div
                 key={tool.id}
                 onClick={() => navigate(tool.path)}
-                className="group relative cursor-pointer overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#111] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-xl"
+                className="group relative cursor-pointer overflow-hidden rounded-2xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900/80 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-xl"
               >
                 {/* Preview image */}
-                <div className="relative h-44 overflow-hidden bg-gray-100 dark:bg-[#161616]">
+                <div className="relative h-44 overflow-hidden bg-gray-100 dark:bg-slate-800/70">
                   <img
                     src={tool.preview}
                     alt={tool.name}
@@ -311,12 +320,12 @@ export default function Dashboard() {
                     }}
                   />
                   <div className={`absolute inset-0 bg-gradient-to-br ${tool.color} opacity-40`} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  <span className="absolute left-2 top-2 rounded-full bg-black/40 backdrop-blur-sm px-2 py-0.5 text-xs font-semibold text-white">
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/85 via-white/35 to-transparent dark:from-slate-950/80 dark:via-slate-900/35" />
+                  <span className="absolute left-2 top-2 rounded-full border border-white/50 bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-700 backdrop-blur-sm dark:border-slate-700/80 dark:bg-slate-900/70 dark:text-slate-100">
                     {tool.badge}
                   </span>
                 </div>
-                <div className="p-3">
+                <div className="border-t border-gray-100 bg-white/95 p-3 dark:border-slate-700 dark:bg-slate-900/85">
                   <h3 className="font-bold text-gray-900 dark:text-white text-sm truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{tool.name}</h3>
                   <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{tool.desc}</p>
                   <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400">

@@ -5,13 +5,19 @@ import { ensureBalance, deductToken } from '../middleware/balance.js'
 
 const router = Router()
 
-const RUNPOD_API_KEY = process.env.RUNPOD_API_KEY || ''
+const RUNPOD_IMAGE_API_KEY = process.env.RUNPOD_IMAGE_API_KEY || process.env.RUNPOD_API_KEY || ''
+const RUNPOD_VIDEO_API_KEY = process.env.RUNPOD_VIDEO_API_KEY || process.env.RUNPOD_API_KEY || ''
 const RUNPOD_ENDPOINT_ID = process.env.RUNPOD_ENDPOINT_ID || 'seedream-v4-edit'
 const RUNPOD_BASE = `https://api.runpod.ai/v2/${RUNPOD_ENDPOINT_ID}`
 
-const runpodHeaders = () => ({
+const runpodImageHeaders = () => ({
   'Content-Type': 'application/json',
-  'Authorization': `Bearer ${RUNPOD_API_KEY}`,
+  'Authorization': `Bearer ${RUNPOD_IMAGE_API_KEY}`,
+})
+
+const runpodVideoHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${RUNPOD_VIDEO_API_KEY}`,
 })
 
 /**
@@ -99,7 +105,7 @@ router.post('/generate', requireAuth, ensureBalance, async (req: Request, res: R
     return
   }
 
-  if (!RUNPOD_API_KEY) {
+  if (!RUNPOD_IMAGE_API_KEY) {
     res.status(500).json({ success: false, error: 'RunPod API key tidak dikonfigurasi' })
     return
   }
@@ -134,7 +140,7 @@ router.post('/generate', requireAuth, ensureBalance, async (req: Request, res: R
 
     const response = await fetch(`${RUNPOD_BASE}/run`, {
       method: 'POST',
-      headers: runpodHeaders(),
+      headers: runpodImageHeaders(),
       body: JSON.stringify(payload),
     })
 
@@ -178,7 +184,7 @@ router.get('/status/:jobId', requireAuth, async (req: Request, res: Response): P
     return
   }
 
-  if (!RUNPOD_API_KEY) {
+  if (!RUNPOD_IMAGE_API_KEY) {
     res.status(500).json({ success: false, error: 'RunPod API key tidak dikonfigurasi' })
     return
   }
@@ -186,7 +192,7 @@ router.get('/status/:jobId', requireAuth, async (req: Request, res: Response): P
   try {
     const response = await fetch(`${RUNPOD_BASE}/status/${jobId}`, {
       method: 'GET',
-      headers: runpodHeaders(),
+      headers: runpodImageHeaders(),
     })
 
     const data = await response.json()
@@ -239,7 +245,7 @@ router.get('/status/:jobId', requireAuth, async (req: Request, res: Response): P
 router.post('/upload-url', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const { filename, contentType = 'image/jpeg' } = req.body
 
-  if (!RUNPOD_API_KEY) {
+  if (!RUNPOD_IMAGE_API_KEY) {
     res.status(500).json({ success: false, error: 'RunPod API key tidak dikonfigurasi' })
     return
   }
@@ -247,7 +253,7 @@ router.post('/upload-url', requireAuth, async (req: Request, res: Response): Pro
   try {
     const response = await fetch('https://api.runpod.ai/v2/upload', {
       method: 'POST',
-      headers: runpodHeaders(),
+      headers: runpodImageHeaders(),
       body: JSON.stringify({ filename, contentType }),
     })
 
@@ -275,7 +281,7 @@ router.post('/nano-banana/generate', requireAuth, async (req: Request, res: Resp
     return
   }
 
-  if (!RUNPOD_API_KEY) {
+  if (!RUNPOD_IMAGE_API_KEY) {
     res.status(500).json({ success: false, error: 'RunPod API key tidak dikonfigurasi' })
     return
   }
@@ -297,7 +303,7 @@ router.post('/nano-banana/generate', requireAuth, async (req: Request, res: Resp
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RUNPOD_API_KEY}`,
+        'Authorization': `Bearer ${RUNPOD_IMAGE_API_KEY}`,
       },
       body: JSON.stringify({ input }),
     })
@@ -330,7 +336,7 @@ router.post('/nano-banana/generate', requireAuth, async (req: Request, res: Resp
 router.get('/nano-banana/status/:jobId', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const { jobId } = req.params
 
-  if (!RUNPOD_API_KEY) {
+  if (!RUNPOD_IMAGE_API_KEY) {
     res.status(500).json({ success: false, error: 'RunPod API key tidak dikonfigurasi' })
     return
   }
@@ -340,7 +346,7 @@ router.get('/nano-banana/status/:jobId', requireAuth, async (req: Request, res: 
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RUNPOD_API_KEY}`,
+        'Authorization': `Bearer ${RUNPOD_IMAGE_API_KEY}`,
       },
     })
 
@@ -394,7 +400,7 @@ router.post('/wan-i2v/generate', requireAuth, async (req: Request, res: Response
     res.status(400).json({ success: false, error: 'Image diperlukan' })
     return
   }
-  if (!RUNPOD_API_KEY) {
+  if (!RUNPOD_VIDEO_API_KEY) {
     res.status(500).json({ success: false, error: 'RunPod API key tidak dikonfigurasi' })
     return
   }
@@ -402,7 +408,7 @@ router.post('/wan-i2v/generate', requireAuth, async (req: Request, res: Response
   try {
     const response = await fetch('https://api.runpod.ai/v2/wan-2-1-i2v-720/run', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RUNPOD_API_KEY}` },
+      headers: runpodVideoHeaders(),
       body: JSON.stringify({
         input: {
           prompt: prompt.trim(), image, negative_prompt, size,
@@ -432,10 +438,10 @@ router.post('/wan-i2v/generate', requireAuth, async (req: Request, res: Response
  */
 router.get('/wan-i2v/status/:jobId', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const { jobId } = req.params
-  if (!RUNPOD_API_KEY) { res.status(500).json({ success: false, error: 'RunPod API key tidak dikonfigurasi' }); return }
+  if (!RUNPOD_VIDEO_API_KEY) { res.status(500).json({ success: false, error: 'RunPod API key tidak dikonfigurasi' }); return }
   try {
     const response = await fetch(`https://api.runpod.ai/v2/wan-2-1-i2v-720/status/${jobId}`, {
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RUNPOD_API_KEY}` },
+      headers: runpodVideoHeaders(),
     })
     const data = await response.json()
     if (!response.ok) throw new Error(data?.error || `Status error: ${response.status}`)

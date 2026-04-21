@@ -253,16 +253,16 @@ export default function TextToImage() {
   const allUploaded = images.length > 0 && images.every(img => !img.uploading && !img.error && img.publicUrl);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0a0a0a] text-white">
+    <div className="flex min-h-screen flex-col bg-gray-50 text-gray-900 dark:bg-[#0f1117] dark:text-white">
       {/* Top bar */}
-      <div className="flex h-12 items-center justify-between border-b border-white/[0.06] px-4 bg-[#111]">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition">
+      <div className="flex h-12 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-white/[0.07] dark:bg-[#111]">
+        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-sm text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
           <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-purple-400" />
           <span className="text-sm font-semibold">Image to Image AI</span>
-          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-400">Seedream v4 Edit</span>
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-white/10 dark:text-gray-400">Seedream v4 Edit</span>
         </div>
         <div className="w-24" />
       </div>
@@ -270,16 +270,16 @@ export default function TextToImage() {
       {/* Main split layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* â”€â”€ LEFT PANEL: Input â”€â”€ */}
-        <div className="flex w-full flex-col border-r border-white/[0.06] lg:w-[480px] overflow-y-auto bg-[#111]">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
-            <span className="text-sm font-semibold text-white">Input</span>
-            <span className="text-xs text-gray-400">3 Token per generate</span>
+        <div className="flex w-full flex-col overflow-y-auto border-r border-gray-200 bg-white lg:w-[480px] dark:border-white/[0.07] dark:bg-[#111]">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2.5 dark:border-white/[0.07]">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">Input</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">3 Token per generate</span>
           </div>
 
           <div className="flex-1 space-y-5 p-4">
             {/* Prompt */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-400">Prompt</label>
+              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Prompt</label>
               <textarea
                 value={prompt}
                 onChange={e => {
@@ -294,26 +294,26 @@ export default function TextToImage() {
                   }
                 }}
                 placeholder="Describe what you want to create or edit..."
-                className="w-full resize-none overflow-hidden rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 min-h-[80px]"
+                className="w-full resize-none overflow-hidden rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 min-h-[80px] dark:border-white/10 dark:bg-white/5 dark:text-white"
                 style={{ height: 'auto' }}
               />
             </div>
 
             {/* Image Upload */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-400 dark:text-gray-400">
+              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
                 Images <span className="text-red-400">*</span>
-                <span className="ml-1 text-gray-400">(wajib, maks 3)</span>
+                <span className="ml-1 text-gray-500 dark:text-gray-400">(wajib, maks 3)</span>
               </label>
 
               {/* Uploaded images list */}
               {images.map((img, i) => (
-                <div key={i} className="mb-2 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div key={i} className="mb-2 flex items-center gap-3 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 dark:border-white/10 dark:bg-white/5">
                   <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded">
                     <img src={img.preview} alt="" className="h-full w-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="truncate text-xs text-gray-300">
+                    <p className="truncate text-xs text-gray-600 dark:text-gray-300">
                       {img.uploading ? 'Uploading...' : img.error ? img.error : img.publicUrl || img.name}
                     </p>
                   </div>
@@ -323,7 +323,7 @@ export default function TextToImage() {
                     {!img.uploading && !img.error && (
                       <div className="h-2 w-2 rounded-full bg-green-500" title="Uploaded" />
                     )}
-                    <button onClick={() => removeImage(i)} className="text-gray-400 hover:text-red-400 transition">
+                    <button onClick={() => removeImage(i)} className="text-gray-500 transition hover:text-red-400 dark:text-gray-400">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -338,23 +338,23 @@ export default function TextToImage() {
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
                   className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-6 transition ${
-                    isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 hover:border-white/20 hover:bg-white/5'
+                    isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:border-white/10 dark:hover:border-white/20 dark:hover:bg-white/5'
                   }`}
                 >
-                  <Plus className="h-5 w-5 text-gray-400" />
-                  <span className="text-xs text-gray-400">Add more files</span>
+                  <Plus className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Add more files</span>
                 </div>
               )}
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileInput} />
-              <p className="mt-1.5 text-xs text-gray-400">jpeg, jpg, png up to 16MB</p>
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">jpeg, jpg, png up to 16MB</p>
             </div>
 
             {/* Additional Settings */}
-            <div className="rounded-lg border border-white/10">
+            <div className="rounded-lg border border-gray-300 dark:border-white/10">
               <button
                 type="button"
                 onClick={() => setShowSettings(!showSettings)}
-                className="flex w-full items-center justify-between px-4 py-3 text-sm text-gray-400 hover:text-white transition"
+                className="flex w-full items-center justify-between px-4 py-3 text-sm text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
               >
                 <span>Additional settings</span>
                 {showSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -362,7 +362,7 @@ export default function TextToImage() {
               {showSettings && (
                 <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-4 space-y-4">
                   <div>
-                    <label className="mb-2 block text-xs font-medium text-gray-400">Output Size</label>
+                    <label className="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">Output Size</label>
                     <div className="flex gap-2">
                       {SIZE_OPTIONS.map(opt => {
                         const [w, h] = opt.ratio.split('/').map(Number);
@@ -380,12 +380,12 @@ export default function TextToImage() {
                             className={`flex flex-1 flex-col items-center gap-1.5 rounded-lg border py-2 px-1 transition-all ${
                               isSelected
                                 ? 'border-purple-500 bg-purple-500/20 text-purple-300'
-                                : 'border-gray-600 bg-gray-700/50 text-gray-400 hover:border-purple-400 hover:text-purple-300'
+                                : 'border-gray-300 bg-gray-50 text-gray-600 hover:border-purple-400 hover:text-purple-500 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-400 dark:hover:text-purple-300'
                             }`}
                           >
                             <div className="flex items-center justify-center" style={{ width: maxPx, height: maxPx }}>
                               <div
-                                className={`rounded-sm border-2 ${isSelected ? 'border-purple-400 bg-purple-500/30' : 'border-gray-400 bg-gray-600/50'}`}
+                                className={`rounded-sm border-2 ${isSelected ? 'border-purple-400 bg-purple-500/30' : 'border-gray-400 bg-gray-300/50 dark:bg-gray-600/50'}`}
                                 style={{ width: boxW, height: boxH }}
                               />
                             </div>
@@ -394,14 +394,14 @@ export default function TextToImage() {
                         );
                       })}
                     </div>
-                    <p className="mt-1.5 text-xs text-gray-500">{SIZE_OPTIONS.find(o => o.value === size)?.label}</p>
+                    <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-500">{SIZE_OPTIONS.find(o => o.value === size)?.label}</p>
                   </div>
                   <div className="flex items-center justify-between">
-                    <label className="text-xs text-gray-400 dark:text-gray-400">Safety Checker</label>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Safety Checker</label>
                     <button
                       type="button"
                       onClick={() => setSafetyChecker(!safetyChecker)}
-                      className={`relative h-5 w-9 rounded-full transition ${safetyChecker ? 'bg-purple-600' : 'bg-white/10'}`}
+                      className={`relative h-5 w-9 rounded-full transition ${safetyChecker ? 'bg-purple-600' : 'bg-gray-300 dark:bg-white/10'}`}
                     >
                       <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${safetyChecker ? 'left-4' : 'left-0.5'}`} />
                     </button>
@@ -412,11 +412,11 @@ export default function TextToImage() {
           </div>
 
           {/* Action buttons */}
-          <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-4 py-3 dark:border-gray-700">
             <button
               onClick={handleReset}
               disabled={isRunning}
-              className="rounded-lg border border-white/10 px-5 py-2 text-sm font-medium text-gray-400 hover:border-white/30 hover:text-white transition disabled:opacity-40"
+              className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-600 transition hover:border-gray-400 hover:text-gray-900 disabled:opacity-40 dark:border-white/10 dark:text-gray-400 dark:hover:border-white/30 dark:hover:text-white"
             >
               Reset
             </button>
@@ -432,34 +432,34 @@ export default function TextToImage() {
         </div>
 
         {/* â”€â”€ RIGHT PANEL: Result â”€â”€ */}
-        <div className="flex flex-1 flex-col">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
+        <div className="flex flex-1 flex-col bg-gray-50 dark:bg-[#0f1117]">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2.5 dark:border-white/[0.07]">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-white">Result</span>
-              <div className="flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1">
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">Result</span>
+              <div className="flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-white/5">
                 <div className={`h-2 w-2 rounded-full ${STATUS_DOT[status]}`} />
-                <span className="text-xs text-gray-400 dark:text-gray-400">{STATUS_LABEL[status]}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{STATUS_LABEL[status]}</span>
               </div>
             </div>
             {resultUrl && (
               <div className="flex items-center gap-2">
-                <div className="flex rounded-lg border border-white/10 overflow-hidden">
+                <div className="flex overflow-hidden rounded-lg border border-gray-300 dark:border-white/10">
                   <button
                     onClick={() => setResultTab('preview')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'preview' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'preview' ? 'bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}`}
                   >
                     <ImageIcon className="h-3.5 w-3.5" /> Preview
                   </button>
                   <button
                     onClick={() => setResultTab('json')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'json' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'json' ? 'bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}`}
                   >
                     <FileImage className="h-3.5 w-3.5" /> JSON
                   </button>
                 </div>
                 <button
                   onClick={handleDownload}
-                  className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-400 hover:border-white/30 hover:text-white transition"
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-600 transition hover:border-gray-400 hover:text-gray-900 dark:border-white/10 dark:text-gray-400 dark:hover:border-white/30 dark:hover:text-white"
                 >
                   <Download className="h-3.5 w-3.5" /> Download image
                 </button>
@@ -484,7 +484,7 @@ export default function TextToImage() {
               </div>
             ) : resultUrl && resultTab === 'json' ? (
               <div className="w-full max-w-2xl">
-                <pre className="overflow-auto rounded-xl bg-white/5 p-4 text-xs text-green-400 max-h-[calc(100vh-160px)]">
+                <pre className="max-h-[calc(100vh-160px)] overflow-auto rounded-xl bg-white p-4 text-xs text-emerald-700 shadow-sm ring-1 ring-gray-200 dark:bg-white/5 dark:text-green-400 dark:ring-0">
                   {JSON.stringify(rawJson, null, 2)}
                 </pre>
               </div>
@@ -498,8 +498,8 @@ export default function TextToImage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-lg font-semibold text-white">{STATUS_LABEL[status]}</p>
-                  <p className="mt-1 text-sm text-gray-400">Biasanya 15–60 detik, harap tunggu...</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{STATUS_LABEL[status]}</p>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Biasanya 15–60 detik, harap tunggu...</p>
 </div>
                 <div className="w-64 overflow-hidden rounded-full bg-white/10">
                   <div
@@ -513,11 +513,11 @@ export default function TextToImage() {
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
                   <AlertCircle className="h-8 w-8 text-red-400" />
                 </div>
-                <p className="font-semibold text-white">Generation Failed</p>
-                <p className="text-sm text-gray-400">Coba lagi dengan prompt atau gambar berbeda</p>
+                <p className="font-semibold text-gray-900 dark:text-white">Generation Failed</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Coba lagi dengan prompt atau gambar berbeda</p>
                 <button
                   onClick={() => setStatus('IDLE')}
-                  className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm text-gray-400 hover:text-white transition"
+                  className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 transition hover:text-gray-900 dark:border-white/10 dark:text-gray-400 dark:hover:text-white"
                 >
                   <RefreshCw className="h-4 w-4" /> Coba Lagi
                 </button>

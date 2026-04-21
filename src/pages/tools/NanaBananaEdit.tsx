@@ -157,55 +157,55 @@ export default function NanaBananaEdit() {
   const canRun = !!image && !image.uploading && !image.error && !!image.publicUrl && !!prompt.trim();
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#050505] text-white">
+    <div className="flex min-h-screen flex-col bg-gray-50 text-gray-900 dark:bg-[#0f1117] dark:text-white">
       {/* Top bar */}
-      <div className="flex h-12 items-center justify-between border-b border-white/[0.06] px-4 bg-[#111]">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition">
+      <div className="flex h-12 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-white/[0.07] dark:bg-[#111]">
+        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-sm text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
           <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-yellow-400" />
           <span className="text-sm font-semibold">Nano Banana Edit</span>
-          <span className="rounded-full bg-white/8 px-2 py-0.5 text-xs text-gray-400">Google Nano Banana 2</span>
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-white/10 dark:text-gray-400">Google Nano Banana 2</span>
         </div>
         <div className="w-24" />
       </div>
 
       <div className="flex flex-1 overflow-hidden">
         {/* LEFT */}
-        <div className="flex w-full flex-col border-r border-white/[0.06] lg:w-[480px] overflow-y-auto bg-[#111]">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
-            <span className="text-sm font-semibold text-white">Input</span>
-            <span className="text-xs text-gray-400">3 Token per generate</span>
+        <div className="flex w-full flex-col overflow-y-auto border-r border-gray-200 bg-white lg:w-[480px] dark:border-white/[0.07] dark:bg-[#111]">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2.5 dark:border-white/[0.07]">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">Input</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">3 Token per generate</span>
           </div>
 
           <div className="flex-1 space-y-5 p-4">
             {/* Prompt */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-400">Prompt</label>
+              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Prompt</label>
               <textarea
                 value={prompt}
                 onChange={e => { setPrompt(e.target.value); e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
                 ref={el => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } }}
                 placeholder="Describe what you want to change..."
-                className="w-full resize-none overflow-hidden rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white placeholder-gray-600 focus:border-yellow-500/50 focus:outline-none min-h-[80px]"
+                className="w-full resize-none overflow-hidden rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-900 placeholder-gray-400 focus:border-yellow-500/50 focus:outline-none min-h-[80px] dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-gray-600"
                 style={{ height: 'auto' }}
               />
             </div>
 
             {/* Image Upload */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-400">
+              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
                 Image <span className="text-red-400">*</span>
-                <span className="ml-1 text-gray-600">(1 gambar, maks 16MB)</span>
+                <span className="ml-1 text-gray-500 dark:text-gray-600">(1 gambar, maks 16MB)</span>
               </label>
               {image ? (
-                <div className="mb-2 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div className="mb-2 flex items-center gap-3 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 dark:border-white/10 dark:bg-white/5">
                   <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded">
                     <img src={image.preview} alt="" className="h-full w-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="truncate text-xs text-gray-300">
+                    <p className="truncate text-xs text-gray-600 dark:text-gray-300">
                       {image.uploading ? 'Uploading...' : image.error ? image.error : image.publicUrl || image.name}
                     </p>
                   </div>
@@ -213,7 +213,7 @@ export default function NanaBananaEdit() {
                     {image.uploading && <Loader2 className="h-3.5 w-3.5 animate-spin text-yellow-400" />}
                     {image.error && <AlertCircle className="h-3.5 w-3.5 text-red-400" />}
                     {!image.uploading && !image.error && <div className="h-2 w-2 rounded-full bg-green-500" />}
-                    <button onClick={removeImage} className="text-gray-500 hover:text-red-400 transition">
+                    <button onClick={removeImage} className="text-gray-500 transition hover:text-red-400">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -224,31 +224,31 @@ export default function NanaBananaEdit() {
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-8 transition ${isDragging ? 'border-yellow-500 bg-yellow-500/10' : 'border-white/10 hover:border-white/20 hover:bg-white/5'}`}
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-8 transition ${isDragging ? 'border-yellow-500 bg-yellow-500/10' : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:border-white/10 dark:hover:border-white/20 dark:hover:bg-white/5'}`}
                 >
                   <Plus className="h-5 w-5 text-gray-500" />
                   <span className="text-xs text-gray-500">Upload or drag and drop</span>
                 </div>
               )}
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileInput} />
-              <p className="mt-1.5 text-xs text-gray-600">jpeg, jpg, png up to 16MB</p>
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-600">jpeg, jpg, png up to 16MB</p>
             </div>
 
             {/* Additional Settings */}
-            <div className="rounded-lg border border-white/10">
+            <div className="rounded-lg border border-gray-300 dark:border-white/10">
               <button type="button" onClick={() => setShowSettings(!showSettings)}
-                className="flex w-full items-center justify-between px-4 py-3 text-sm text-gray-400 hover:text-white transition">
+                className="flex w-full items-center justify-between px-4 py-3 text-sm text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
                 <span>Additional settings</span>
                 {showSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
               {showSettings && (
-                <div className="border-t border-white/10 px-4 py-4 space-y-4">
+                <div className="space-y-4 border-t border-gray-200 px-4 py-4 dark:border-white/10">
                   <div>
-                    <label className="mb-2 block text-xs font-medium text-gray-400">Resolution</label>
+                    <label className="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">Resolution</label>
                     <div className="flex gap-2">
                       {RESOLUTIONS.map(r => (
                         <button key={r.value} onClick={() => setResolution(r.value)}
-                          className={`flex-1 rounded-lg border py-2 text-center transition ${resolution === r.value ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400' : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20'}`}>
+                          className={`flex-1 rounded-lg border py-2 text-center transition ${resolution === r.value ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500 dark:text-yellow-400' : 'border-gray-300 bg-gray-50 text-gray-600 hover:border-gray-400 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:hover:border-white/20'}`}>
                           <p className="text-sm font-bold">{r.label}</p>
                           <p className="text-xs opacity-60">{r.desc}</p>
                         </button>
@@ -256,20 +256,20 @@ export default function NanaBananaEdit() {
                     </div>
                   </div>
                   <div>
-                    <label className="mb-2 block text-xs font-medium text-gray-400">Output Format</label>
+                    <label className="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">Output Format</label>
                     <div className="flex gap-2">
                       {OUTPUT_FORMATS.map(f => (
                         <button key={f.value} onClick={() => setOutputFormat(f.value)}
-                          className={`flex-1 rounded-lg border py-2 text-sm font-medium transition ${outputFormat === f.value ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400' : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20'}`}>
+                          className={`flex-1 rounded-lg border py-2 text-sm font-medium transition ${outputFormat === f.value ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500 dark:text-yellow-400' : 'border-gray-300 bg-gray-50 text-gray-600 hover:border-gray-400 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:hover:border-white/20'}`}>
                           {f.label}
                         </button>
                       ))}
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <label className="text-xs text-gray-400">Safety Checker</label>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Safety Checker</label>
                     <button type="button" onClick={() => setSafetyChecker(!safetyChecker)}
-                      className={`relative h-5 w-9 rounded-full transition ${safetyChecker ? 'bg-yellow-500' : 'bg-white/10'}`}>
+                      className={`relative h-5 w-9 rounded-full transition ${safetyChecker ? 'bg-yellow-500' : 'bg-gray-300 dark:bg-white/10'}`}>
                       <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${safetyChecker ? 'left-4' : 'left-0.5'}`} />
                     </button>
                   </div>
@@ -279,9 +279,9 @@ export default function NanaBananaEdit() {
           </div>
 
           {/* Actions */}
-          <div className="border-t border-white/[0.06] px-4 py-3 flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-4 py-3 dark:border-white/[0.07]">
             <button onClick={handleReset} disabled={isRunning}
-              className="rounded-lg border border-white/10 px-5 py-2 text-sm font-medium text-gray-400 hover:border-white/20 hover:text-white transition disabled:opacity-40">
+              className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-600 transition hover:border-gray-400 hover:text-gray-900 disabled:opacity-40 dark:border-white/10 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-white">
               Reset
             </button>
             <button onClick={handleRun} disabled={isRunning || !canRun}
@@ -293,33 +293,33 @@ export default function NanaBananaEdit() {
         </div>
 
         {/* RIGHT */}
-        <div className="flex flex-1 flex-col">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
+        <div className="flex flex-1 flex-col bg-gray-50 dark:bg-[#0f1117]">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2.5 dark:border-white/[0.07]">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-white">Result</span>
-              <div className="flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1">
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">Result</span>
+              <div className="flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-white/5">
                 <div className={`h-2 w-2 rounded-full ${STATUS_DOT[status]}`} />
-                <span className="text-xs text-gray-400">{STATUS_LABEL[status]}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{STATUS_LABEL[status]}</span>
               </div>
             </div>
             {resultUrl && (
               <div className="flex items-center gap-2">
-                <div className="flex rounded-lg border border-white/10 overflow-hidden">
-                  <button onClick={() => setResultTab('preview')} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'preview' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
+                <div className="flex overflow-hidden rounded-lg border border-gray-300 dark:border-white/10">
+                  <button onClick={() => setResultTab('preview')} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'preview' ? 'bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white' : 'text-gray-500 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white'}`}>
                     <ImageIcon className="h-3.5 w-3.5" /> Preview
                   </button>
-                  <button onClick={() => setResultTab('json')} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'json' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
+                  <button onClick={() => setResultTab('json')} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === 'json' ? 'bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white' : 'text-gray-500 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white'}`}>
                     <FileImage className="h-3.5 w-3.5" /> JSON
                   </button>
                 </div>
-                <button onClick={handleDownload} className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-400 hover:border-white/20 hover:text-white transition">
+                <button onClick={handleDownload} className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-600 transition hover:border-gray-400 hover:text-gray-900 dark:border-white/10 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-white">
                   <Download className="h-3.5 w-3.5" /> Download image
                 </button>
               </div>
             )}
           </div>
 
-          <div className="flex flex-1 items-center justify-center overflow-auto p-4">
+          <div className="flex flex-1 items-center justify-center overflow-auto bg-gray-50 p-4 dark:bg-[#0f1117]">
             {resultUrl && resultTab === 'preview' ? (
               <div className="relative group max-h-full">
                 <img src={resultUrl} alt="Generated" className="max-h-[calc(100vh-120px)] max-w-full rounded-xl object-contain shadow-2xl" />
@@ -329,7 +329,7 @@ export default function NanaBananaEdit() {
               </div>
             ) : resultUrl && resultTab === 'json' ? (
               <div className="w-full max-w-2xl">
-                <pre className="overflow-auto rounded-xl bg-white/5 p-4 text-xs text-green-400 max-h-[calc(100vh-160px)]">
+                <pre className="max-h-[calc(100vh-160px)] overflow-auto rounded-xl bg-white p-4 text-xs text-emerald-700 shadow-sm ring-1 ring-gray-200 dark:bg-white/5 dark:text-green-400 dark:ring-0">
                   {JSON.stringify(rawJson, null, 2)}
                 </pre>
               </div>
@@ -341,8 +341,8 @@ export default function NanaBananaEdit() {
                   <div className="absolute inset-3 flex items-center justify-center text-2xl">🍌</div>
                 </div>
                 <div>
-                  <p className="text-lg font-semibold text-white">{STATUS_LABEL[status]}</p>
-                  <p className="mt-1 text-sm text-gray-400">Biasanya 15–60 detik, harap tunggu...</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{STATUS_LABEL[status]}</p>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Biasanya 15–60 detik, harap tunggu...</p>
                 </div>
                 <div className="w-64 overflow-hidden rounded-full bg-white/10">
                   <div className="h-1 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-1000"
@@ -354,9 +354,9 @@ export default function NanaBananaEdit() {
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
                   <AlertCircle className="h-8 w-8 text-red-400" />
                 </div>
-                <p className="font-semibold text-white">Generation Failed</p>
-                <p className="text-sm text-gray-400">Coba lagi dengan prompt atau gambar berbeda</p>
-                <button onClick={() => setStatus('IDLE')} className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm text-gray-400 hover:text-white transition">
+                <p className="font-semibold text-gray-900 dark:text-white">Generation Failed</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Coba lagi dengan prompt atau gambar berbeda</p>
+                <button onClick={() => setStatus('IDLE')} className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 transition hover:text-gray-900 dark:border-white/10 dark:text-gray-400 dark:hover:text-white">
                   <RefreshCw className="h-4 w-4" /> Coba Lagi
                 </button>
               </div>

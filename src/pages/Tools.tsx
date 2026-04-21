@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import {
   FileText, TrendingUp, Image as ImageIcon, Download, Hash, Film, Music,
-  Lock, Mic, Zap, Search, MessageCircle, Palette, Eraser, Calendar, Sparkles,
+  Lock, Mic, Zap, Search, MessageCircle, Palette, Eraser, Calendar, Sparkles, Workflow,
   Link as LinkIcon, Scissors, X
 } from 'lucide-react';
 
@@ -43,6 +43,7 @@ const tools = [
   { id: 'giveaway-picker', name: 'Giveaway Picker & Checker', description: 'Undi pemenang giveaway secara adil dan transparan.', icon: Zap, path: '/tools/giveaway-picker', color: 'text-yellow-600', bgColor: 'bg-yellow-100 dark:bg-yellow-900/30', category: 'utility', badge: null, preview: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600&q=80' },
   { id: 'shadowban-checker', name: 'Shadowban Checker', description: 'Analisa kesehatan akun dan deteksi pembatasan jangkauan.', icon: Search, path: '/tools/shadowban-checker', color: 'text-gray-600', bgColor: 'bg-gray-100 dark:bg-gray-700', category: 'utility', badge: 'Penting', preview: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=600&q=80' },
   { id: 'all-in-one-downloader', name: 'All-in-One Downloader', description: 'Download video dari IG, TikTok, YouTube tanpa watermark.', icon: Download, path: '/tools/downloader', color: 'text-cyan-600', bgColor: 'bg-cyan-100 dark:bg-cyan-900/30', category: 'utility', badge: 'Beta', preview: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=600&q=80' },
+  { id: 'node-marketing-terminal', name: 'Node Marketing Terminal', description: 'Workflow node ala n8n + ComfyUI untuk generate prompt iklan AI end-to-end.', icon: Workflow, path: '/tools/node-marketing-terminal', color: 'text-indigo-600', bgColor: 'bg-indigo-100 dark:bg-indigo-900/30', category: 'utility', badge: 'Baru', preview: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&q=80' },
 ];
 
 const categories = [
@@ -170,7 +171,7 @@ export default function Tools() {
                     loading="lazy"
                     onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/35 to-transparent dark:from-slate-950/75 dark:via-slate-900/35" />
                   {tool.badge && (
                     <div className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-xs font-bold ${getBadgeStyle(tool.badge)}`}>
                       {tool.badge}

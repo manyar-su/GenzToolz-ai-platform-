@@ -190,16 +190,16 @@ export default function WanI2V() {
   const canRun = !!image && !image.uploading && !image.error && !!image.publicUrl && !!prompt.trim();
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#050505] text-white">
+    <div className="flex min-h-screen flex-col bg-gray-50 text-gray-900 dark:bg-[#0f1117] dark:text-white">
       {/* Top bar */}
-      <div className="flex h-12 items-center justify-between border-b border-white/[0.06] px-4 bg-[#111]">
-        <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition">
+      <div className="flex h-12 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-white/[0.07] dark:bg-[#111]">
+        <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
           <ArrowLeft className="h-4 w-4" /> Kembali
         </button>
         <div className="flex items-center gap-2">
           <Film className="h-4 w-4 text-blue-400" />
           <span className="text-sm font-semibold">Image to Video</span>
-          <span className="rounded-full bg-white/8 px-2 py-0.5 text-xs text-gray-400">WAN 2.1 720p</span>
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-white/10 dark:text-gray-400">WAN 2.1 720p</span>
           
         </div>
         <div className="w-24" />
@@ -207,46 +207,46 @@ export default function WanI2V() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* LEFT */}
-        <div className="flex w-full flex-col border-r border-white/[0.06] lg:w-[480px] overflow-y-auto bg-[#111]">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
-            <span className="text-sm font-semibold text-white">Input</span>
-            <span className="text-xs text-gray-400">3 Token per generate</span>
+        <div className="flex w-full flex-col overflow-y-auto border-r border-gray-200 bg-white lg:w-[480px] dark:border-white/[0.07] dark:bg-[#111]">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2.5 dark:border-white/[0.07]">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">Input</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">3 Token per generate</span>
           </div>
 
           <div className="flex-1 space-y-4 p-4">
             {/* Prompt */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-400">Prompt</label>
+              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Prompt</label>
               <textarea
                 value={prompt}
                 onChange={e => { setPrompt(e.target.value); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
                 ref={el => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
                 placeholder="Describe the motion and scene..."
-                className="w-full resize-none overflow-hidden rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white placeholder-gray-600 focus:border-blue-500/50 focus:outline-none min-h-[80px]"
+                className="w-full resize-none overflow-hidden rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500/50 focus:outline-none min-h-[80px] dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-gray-600"
                 style={{ height: "auto" }}
               />
             </div>
 
             {/* Negative Prompt */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-400">Negative prompt</label>
+              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Negative prompt</label>
               <input
                 type="text"
                 value={negativePrompt}
                 onChange={e => setNegativePrompt(e.target.value)}
                 placeholder="What to avoid..."
-                className="w-full rounded-lg border border-white/10 bg-white/5 p-2.5 text-sm text-white placeholder-gray-600 focus:border-blue-500/50 focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500/50 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-gray-600"
               />
             </div>
 
             {/* Duration */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-400">Duration</label>
-              <p className="mb-2 text-xs text-gray-600">Duration in seconds</p>
+              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Duration</label>
+              <p className="mb-2 text-xs text-gray-500 dark:text-gray-600">Duration in seconds</p>
               <div className="flex gap-2">
                 {DURATIONS.map(d => (
                   <button key={d} onClick={() => setDuration(d)}
-                    className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${duration === d ? "border-blue-500/50 bg-blue-500/10 text-blue-400" : "border-white/10 bg-white/5 text-gray-400 hover:border-white/20"}`}>
+                    className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${duration === d ? "border-blue-500/50 bg-blue-500/10 text-blue-500 dark:text-blue-400" : "border-gray-300 bg-gray-50 text-gray-600 hover:border-gray-400 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:hover:border-white/20"}`}>
                     {d}s
                   </button>
                 ))}
@@ -255,22 +255,22 @@ export default function WanI2V() {
 
             {/* Image Upload */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-400">
+              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
                 Image <span className="text-red-400">*</span>
               </label>
               {image ? (
-                <div className="mb-2 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <div className="mb-2 flex items-center gap-3 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 dark:border-white/10 dark:bg-white/5">
                   <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded">
                     <img src={image.preview} alt="" className="h-full w-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="truncate text-xs text-gray-300">{image.uploading ? "Uploading..." : image.error ? image.error : image.publicUrl || image.name}</p>
+                    <p className="truncate text-xs text-gray-600 dark:text-gray-300">{image.uploading ? "Uploading..." : image.error ? image.error : image.publicUrl || image.name}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     {image.uploading && <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-400" />}
                     {image.error && <AlertCircle className="h-3.5 w-3.5 text-red-400" />}
                     {!image.uploading && !image.error && <div className="h-2 w-2 rounded-full bg-green-500" />}
-                    <button onClick={removeImage} className="text-gray-500 hover:text-red-400 transition"><X className="h-3.5 w-3.5" /></button>
+                    <button onClick={removeImage} className="text-gray-500 transition hover:text-red-400"><X className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
               ) : (
@@ -279,43 +279,43 @@ export default function WanI2V() {
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-8 transition ${isDragging ? "border-blue-500 bg-blue-500/10" : "border-white/10 hover:border-white/20 hover:bg-white/5"}`}
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-8 transition ${isDragging ? "border-blue-500 bg-blue-500/10" : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:border-white/10 dark:hover:border-white/20 dark:hover:bg-white/5"}`}
                 >
                   <Plus className="h-5 w-5 text-gray-500" />
                   <span className="text-xs text-gray-500">Upload or drag and drop</span>
                 </div>
               )}
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileInput} />
-              <p className="mt-1.5 text-xs text-gray-600">jpeg, jpg, png up to 16MB (single file)</p>
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-600">jpeg, jpg, png up to 16MB (single file)</p>
             </div>
 
             {/* Additional Settings */}
-            <div className="rounded-lg border border-white/10">
+            <div className="rounded-lg border border-gray-300 dark:border-white/10">
               <button type="button" onClick={() => setShowSettings(!showSettings)}
-                className="flex w-full items-center justify-between px-4 py-3 text-sm text-gray-400 hover:text-white transition">
+                className="flex w-full items-center justify-between px-4 py-3 text-sm text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
                 <span>Additional settings</span>
                 {showSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
               {showSettings && (
-                <div className="border-t border-white/10 px-4 py-4 space-y-4">
+                <div className="space-y-4 border-t border-gray-200 px-4 py-4 dark:border-white/10">
                   <div>
-                    <label className="mb-2 block text-xs font-medium text-gray-400">Size</label>
+                    <label className="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">Size</label>
                     <div className="flex flex-col gap-2">
                       {SIZES.map(s => (
                         <button key={s.value} onClick={() => setSize(s.value)}
-                          className={`rounded-lg border px-3 py-2 text-left text-sm transition ${size === s.value ? "border-blue-500/50 bg-blue-500/10 text-blue-400" : "border-white/10 bg-white/5 text-gray-400 hover:border-white/20"}`}>
+                          className={`rounded-lg border px-3 py-2 text-left text-sm transition ${size === s.value ? "border-blue-500/50 bg-blue-500/10 text-blue-500 dark:text-blue-400" : "border-gray-300 bg-gray-50 text-gray-600 hover:border-gray-400 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:hover:border-white/20"}`}>
                           {s.label}
                         </button>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-400">Inference Steps: {numSteps}</label>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Inference Steps: {numSteps}</label>
                     <input type="range" min={10} max={50} value={numSteps} onChange={e => setNumSteps(Number(e.target.value))}
                       className="w-full accent-blue-500" />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-400">Guidance: {guidance}</label>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Guidance: {guidance}</label>
                     <input type="range" min={1} max={10} step={0.5} value={guidance} onChange={e => setGuidance(Number(e.target.value))}
                       className="w-full accent-blue-500" />
                   </div>
@@ -325,9 +325,9 @@ export default function WanI2V() {
           </div>
 
           {/* Actions */}
-          <div className="border-t border-white/[0.06] px-4 py-3 flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-4 py-3 dark:border-white/[0.07]">
             <button onClick={handleReset} disabled={isRunning}
-              className="rounded-lg border border-white/10 px-5 py-2 text-sm font-medium text-gray-400 hover:border-white/20 hover:text-white transition disabled:opacity-40">
+              className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-600 transition hover:border-gray-400 hover:text-gray-900 disabled:opacity-40 dark:border-white/10 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-white">
               Reset
             </button>
             <button onClick={handleRun} disabled={isRunning || !canRun}
@@ -339,22 +339,22 @@ export default function WanI2V() {
         </div>
 
         {/* RIGHT */}
-        <div className="flex flex-1 flex-col">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
+        <div className="flex flex-1 flex-col bg-gray-50 dark:bg-[#0f1117]">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2.5 dark:border-white/[0.07]">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-white">Result</span>
-              <div className="flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1">
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">Result</span>
+              <div className="flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-white/5">
                 <div className={`h-2 w-2 rounded-full ${STATUS_DOT[status]}`} />
-                <span className="text-xs text-gray-400">{STATUS_LABEL[status]}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{STATUS_LABEL[status]}</span>
               </div>
             </div>
             {resultUrl && (
               <div className="flex items-center gap-2">
-                <div className="flex rounded-lg border border-white/10 overflow-hidden">
-                  <button onClick={() => setResultTab("preview")} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === "preview" ? "bg-white/10 text-white" : "text-gray-500 hover:text-white"}`}>
+                <div className="flex overflow-hidden rounded-lg border border-gray-300 dark:border-white/10">
+                  <button onClick={() => setResultTab("preview")} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === "preview" ? "bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white" : "text-gray-500 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white"}`}>
                     <Play className="h-3.5 w-3.5" /> Preview
                   </button>
-                  <button onClick={() => setResultTab("json")} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === "json" ? "bg-white/10 text-white" : "text-gray-500 hover:text-white"}`}>
+                  <button onClick={() => setResultTab("json")} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition ${resultTab === "json" ? "bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white" : "text-gray-500 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white"}`}>
                     <FileImage className="h-3.5 w-3.5" /> JSON
                   </button>
                 </div>
@@ -376,7 +376,7 @@ export default function WanI2V() {
               </div>
             ) : resultUrl && resultTab === "json" ? (
               <div className="w-full max-w-2xl">
-                <pre className="overflow-auto rounded-xl bg-white/5 p-4 text-xs text-green-400 max-h-[calc(100vh-160px)]">
+                <pre className="max-h-[calc(100vh-160px)] overflow-auto rounded-xl bg-white p-4 text-xs text-emerald-700 shadow-sm ring-1 ring-gray-200 dark:bg-white/5 dark:text-green-400 dark:ring-0">
                   {JSON.stringify(rawJson, null, 2)}
                 </pre>
               </div>
@@ -390,8 +390,8 @@ export default function WanI2V() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-lg font-semibold text-white">{STATUS_LABEL[status]}</p>
-                  <p className="mt-1 text-sm text-gray-400">Biasanya 30–120 detik, harap tunggu...</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{STATUS_LABEL[status]}</p>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Biasanya 30–120 detik, harap tunggu...</p>
                 </div>
                 <div className="w-64 overflow-hidden rounded-full bg-white/10">
                   <div className="h-1 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-1000"
@@ -403,8 +403,8 @@ export default function WanI2V() {
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
                   <AlertCircle className="h-8 w-8 text-red-400" />
                 </div>
-                <p className="font-semibold text-white">Generation Failed</p>
-                <button onClick={() => setStatus("IDLE")} className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm text-gray-400 hover:text-white transition">
+                <p className="font-semibold text-gray-900 dark:text-white">Generation Failed</p>
+                <button onClick={() => setStatus("IDLE")} className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 transition hover:text-gray-900 dark:border-white/10 dark:text-gray-400 dark:hover:text-white">
                   <RefreshCw className="h-4 w-4" /> Coba Lagi
                 </button>
               </div>

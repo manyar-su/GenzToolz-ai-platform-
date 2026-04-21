@@ -2,7 +2,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Menu, X, Moon, Sun, Coins,
-  User, History, Wrench, ChevronUp, ShieldCheck, Wallet, Download
+  User, History, Wrench, ChevronUp, ShieldCheck, Wallet, Download, Workflow
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useTokenStore } from '../store/useTokenStore';
@@ -46,6 +46,7 @@ export default function Layout({ children }: LayoutProps) {
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
     { icon: Wrench, label: 'Tools', path: '/tools' },
+    { icon: Workflow, label: 'Node Marketing', path: '/tools/node-marketing-terminal' },
     { icon: Download, label: 'Downloader', path: '/downloader' },
     { icon: History, label: 'Riwayat', path: '/history' },
     { icon: Users, label: 'Affiliate', path: '/affiliate' },
