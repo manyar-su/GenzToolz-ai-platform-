@@ -51,6 +51,9 @@ import TextToImage from "@/pages/tools/TextToImage";
 import NanaBananaEdit from "@/pages/tools/NanaBananaEdit";
 import WanI2V from "@/pages/tools/WanI2V";
 import NodeMarketingTerminal from "@/pages/tools/NodeMarketingTerminal";
+import NodeMarketing from "@/pages/NodeMarketing";
+import NodeMarketingEditor from "@/pages/NodeMarketingEditor";
+import APIConfiguration from "@/pages/APIConfiguration";
 
 // Error Boundary
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: string }> {
@@ -149,6 +152,9 @@ export default function App() {
           <Route path="/tools/nano-banana-edit" element={<NanaBananaEdit />} />
           <Route path="/tools/wan-i2v" element={<WanI2V />} />
           <Route path="/tools/node-marketing-terminal" element={<NodeMarketingTerminal />} />
+          <Route path="/tools/node-marketing" element={<NodeMarketing />} />
+          <Route path="/tools/node-marketing-editor/:templateId" element={<NodeMarketingEditor />} />
+          <Route path="/api-config" element={<APIConfiguration />} />
           <Route path="/other" element={<div className="text-center text-xl">Other Page - Coming Soon</div>} />
         </Routes>
         </Layout>
